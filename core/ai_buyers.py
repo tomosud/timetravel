@@ -105,21 +105,32 @@ class AIBuyerManager:
         self.buyers = []
         self.initialize_buyers()
     
-    def initialize_buyers(self, count: int = 10) -> None:
-        """AIバイヤーを初期化"""
+    def initialize_buyers(self, count: int = 15) -> None:
+        """AIバイヤーを初期化（より多様性を確保）"""
         self.buyers = []
         
+        # 全ジャンルが最低1人は興味を持つバイヤーがいるようにする
+        all_genres = ItemSystem.GENRES.copy()
+        
         for i in range(count):
-            # 各AIは2-4個のジャンルに興味を持つ
-            interested_genres = random.sample(
-                ItemSystem.GENRES, 
-                random.randint(2, 4)
-            )
+            if i < len(all_genres):
+                # 最初の数人は各ジャンルを確実にカバー
+                primary_genre = all_genres[i]
+                # プライマリジャンル + 1-2個の追加ジャンル
+                additional_genres = random.sample([g for g in all_genres if g != primary_genre], 
+                                                random.randint(1, 2))
+                interested_genres = [primary_genre] + additional_genres
+            else:
+                # 残りは完全ランダム（2-4個のジャンル）
+                interested_genres = random.sample(
+                    all_genres, 
+                    random.randint(2, 4)
+                )
             
-            # パラメータをランダム生成
-            condition_preference = random.uniform(0.5, 1.0)
-            rarity_preference = random.uniform(0.8, 1.5)
-            price_sensitivity = random.uniform(0.5, 1.2)
+            # パラメータをランダム生成（幅を広げて多様性向上）
+            condition_preference = random.uniform(0.3, 1.2)
+            rarity_preference = random.uniform(0.6, 1.8)
+            price_sensitivity = random.uniform(0.3, 1.5)
             
             buyer = AIBuyer(
                 buyer_id=i,

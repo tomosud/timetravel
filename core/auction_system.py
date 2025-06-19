@@ -48,10 +48,14 @@ class AuctionSystem:
     def simulate_auction(self, auction_items: List[Dict[str, Any]], 
                         verbose: bool = True) -> List[Dict[str, Any]]:
         """オークションをシミュレート（詳細ログ付き）"""
+        # オークション開始時にAIバイヤーを新規生成（多様性確保）
+        ai_buyer_manager.initialize_buyers()
+        
         if verbose:
             print(f"\n{'='*50}")
             print(f"オークション開始 - {len(auction_items)}個の商品")
             print(f"{'='*50}")
+            print(f"🔄 新しいAIバイヤーが参加しました")
             
             # AIバイヤー統計情報を表示
             buyer_stats = ai_buyer_manager.get_statistics()
