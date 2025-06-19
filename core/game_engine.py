@@ -112,6 +112,13 @@ class GameEngine:
                 return auction_item
         return None
     
+    def remove_auction_item_without_restore(self, item_id: int) -> Optional[Dict[str, Any]]:
+        """オークションから商品を削除（在庫復元なし）"""
+        for i, auction_item in enumerate(self.state['auction_items']):
+            if auction_item['item']['id'] == item_id:
+                return self.state['auction_items'].pop(i)
+        return None
+    
     def update_auction_item(self, item_id: int, updates: Dict[str, Any]) -> bool:
         """オークションアイテムの情報を更新"""
         auction_item = self.get_auction_item(item_id)

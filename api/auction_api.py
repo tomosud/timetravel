@@ -106,13 +106,16 @@ class AuctionAPI:
                     print(f"   ✅ 商品ID:{result['item_id']} 売却完了 → オークションから削除")
                 else:
                     failed_count += 1
-                    # 売却失敗した商品の現在価格を更新（スタート価格のまま）
-                    game_engine.update_auction_item(result['item_id'], {
-                        'bid_count': result['bid_count'],
-                        'current_price': result['start_price']  # 入札がないのでスタート価格のまま
-                    })
-                    
-                    print(f"   ❌ 商品ID:{result['item_id']} 売却失敗 → オークションに残留")
+                    # 売却失敗した商品を在庫に戻す
+                    failed_item = game_engine.get_auction_item(result['item_id'])
+                    if failed_item:
+                        # 商品を在庫に復元
+                        game_engine.add_to_inventory([failed_item['item']])
+                        # オークションから削除（在庫復元なし版を使用）
+                        game_engine.remove_auction_item_without_restore(result['item_id'])
+                        print(f"   ❌ 商品ID:{result['item_id']} 売却失敗 → 在庫に復元")
+                    else:
+                        print(f"   ❌ 商品ID:{result['item_id']} 売却失敗 → 商品が見つかりません")
             
             # 売却済みアイテムのみをクリア（失敗したものは残す）
             game_engine.clear_sold_auction_items()

@@ -87,6 +87,25 @@
 2. app.py: generate_item関数でレア度計算式を改善
 3. 距離と年数の組み合わせでレア度倍率を動的計算
 
+## バグ修正（2025/6/19 23:XX）
+
+### 🐛 商品売却失敗時の消失バグ修正
+**問題**: オークション売却失敗時に商品が在庫から消えてしまう
+**原因**: 
+- オークション設定時に商品をインベントリから削除
+- 売却失敗時の在庫復元処理が欠如
+
+**修正内容**:
+1. **api/auction_api.py**: 売却失敗時の在庫復元処理を追加
+   - `failed_item = game_engine.get_auction_item(result['item_id'])`
+   - `game_engine.add_to_inventory([failed_item['item']])`
+   - `game_engine.remove_auction_item_without_restore(result['item_id'])`
+
+2. **core/game_engine.py**: 在庫復元なしの削除メソッドを追加
+   - `remove_auction_item_without_restore()` メソッド実装
+
+**結果**: 売却失敗時に商品が適切に在庫に戻るように修正
+
 ## リファクタリング計画（2025/6/19 21:38）
 
 ### 🏗️ アーキテクチャ分離
