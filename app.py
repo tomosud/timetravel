@@ -15,24 +15,53 @@ game_state = {
     'game_over': False
 }
 
+def check_game_over():
+    """ゲームオーバー判定：所持金0円かつ在庫なし"""
+    return game_state['money'] <= 0 and len(game_state['inventory']) == 0
+
 # 10ジャンルのハードコード
 GENRES = [
     "家電", "玩具", "服飾", "書籍", "美術品",
     "楽器", "スポーツ用品", "工具", "食器", "アクセサリー"
 ]
 
-# 状態と希少性の定義
+# 状態の定義
 CONDITIONS = {
     'A': {'name': '新品', 'multiplier': 1.0},
     'B': {'name': '良品', 'multiplier': 0.8},
     'C': {'name': '劣化', 'multiplier': 0.6}
 }
 
-RARITIES = {
-    'common': {'name': 'コモン', 'multiplier': 1.0, 'probability': 0.7},
-    'rare': {'name': 'レア', 'multiplier': 2.0, 'probability': 0.25},
-    'ultra_rare': {'name': 'ウルトラレア', 'multiplier': 5.0, 'probability': 0.05}
-}
+def calculate_rarity_multiplier(years, distance):
+    """距離と年数に基づいてレア度倍率を計算"""
+    # 基本倍率
+    base_multiplier = 1.0
+    
+    # 年数ボーナス（古いほど希少）
+    year_bonus = min(years * 0.02, 2.0)  # 最大2.0倍まで
+    
+    # 距離ボーナス（遠いほど希少）
+    distance_bonus = min(distance * 0.001, 1.5)  # 最大1.5倍まで
+    
+    # 組み合わせボーナス（年数と距離の相乗効果）
+    combo_bonus = (years * distance) * 0.00001
+    combo_bonus = min(combo_bonus, 1.0)  # 最大1.0倍まで
+    
+    total_multiplier = base_multiplier + year_bonus + distance_bonus + combo_bonus
+    return round(total_multiplier, 2)
+
+def get_rarity_name(multiplier):
+    """倍率に応じてレア度名を返す"""
+    if multiplier < 1.5:
+        return 'コモン'
+    elif multiplier < 2.5:
+        return 'レア'
+    elif multiplier < 4.0:
+        return 'ウルトラレア'
+    elif multiplier < 5.5:
+        return '伝説'
+    else:
+        return '神話'
 
 # AIバイヤーの定義
 AI_BUYERS = []
@@ -70,31 +99,25 @@ def generate_item(years, distance):
         'C': min(0.9, years * 0.01)
     }
     condition = random.choices(
-        list(condition_weights.keys()), 
+        list(condition_weights.keys()),
         weights=list(condition_weights.values())
     )[0]
     
-    # 年代が古いほど希少価値が上がる可能性
-    rarity_weights = [
-        RARITIES['common']['probability'] * (1.0 - years * 0.005),
-        RARITIES['rare']['probability'] * (1.0 + years * 0.003),
-        RARITIES['ultra_rare']['probability'] * (1.0 + years * 0.002)
-    ]
-    rarity = random.choices(
-        list(RARITIES.keys()),
-        weights=rarity_weights
-    )[0]
+    # 距離と年数に基づいてレア度倍率を計算
+    rarity_multiplier = calculate_rarity_multiplier(years, distance)
+    rarity_name = get_rarity_name(rarity_multiplier)
     
     # 基本価値を計算
     base_value = random.uniform(100, 1000)
     base_value *= CONDITIONS[condition]['multiplier']
-    base_value *= RARITIES[rarity]['multiplier']
+    base_value *= rarity_multiplier
     
     return {
         'id': int(time.time() * 1000000 + random.randint(0, 999999)),
         'genre': genre,
         'condition': condition,
-        'rarity': rarity,
+        'rarity': rarity_name,
+        'rarity_multiplier': rarity_multiplier,
         'base_value': base_value,
         'years': years,
         'distance': distance
@@ -113,8 +136,8 @@ def calculate_ai_interest(ai_buyer, item, price):
     condition_score = CONDITIONS[item['condition']]['multiplier']
     interest *= (condition_score * ai_buyer['condition_preference'])
     
-    # 希少性への評価
-    rarity_score = RARITIES[item['rarity']]['multiplier']
+    # 希少性への評価（新しい動的レア度システム）
+    rarity_score = item.get('rarity_multiplier', 1.0)
     interest *= (rarity_score * ai_buyer['rarity_preference'])
     
     # 価格評価（高すぎると興味が下がる）
@@ -128,6 +151,8 @@ def calculate_ai_interest(ai_buyer, item, price):
 @app.route('/')
 def index():
     """メインページ"""
+    # ゲームオーバー状態を更新
+    game_state['game_over'] = check_game_over()
     return render_template('index.html', game_state=game_state)
 
 @app.route('/buy')
@@ -161,24 +186,40 @@ def api_buy():
         # UFOサイズに応じて商品数を決定（1.0で1個、2.0で2個など）
         item_count = max(1, int(ufo_size))
         
-        # 商品生成
+        # 状態更新（お金を先に支払う）
+        game_state['money'] -= cost
+        
+        # 10%の確率で買い物失敗
+        import random
+        if random.random() < 0.1:  # 10%の失敗確率
+            # 失敗時：お金は支払ったが商品は取得できない
+            game_state['game_over'] = check_game_over()
+            
+            return jsonify({
+                'success': True,
+                'failed': True,
+                'cost': cost,
+                'items': [],
+                'new_money': game_state['money'],
+                'game_over': game_state['game_over']
+            })
+        
+        # 成功時：商品生成
         new_items = []
         for _ in range(item_count):
             item = generate_item(years, distance)
             new_items.append(item)
         
-        # 状態更新
-        game_state['money'] -= cost
         game_state['inventory'].extend(new_items)
-        
-        if game_state['money'] <= 0:
-            game_state['game_over'] = True
+        game_state['game_over'] = check_game_over()
         
         return jsonify({
             'success': True,
+            'failed': False,
             'cost': cost,
             'items': new_items,
-            'new_money': game_state['money']
+            'new_money': game_state['money'],
+            'game_over': game_state['game_over']
         })
         
     except Exception as e:

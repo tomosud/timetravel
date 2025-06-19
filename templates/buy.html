@@ -228,6 +228,20 @@
                             エラー: ${data.error}
                         </div>
                     `;
+                } else if (data.failed) {
+                    resultArea.innerHTML = `
+                        <div class="error">
+                            💥 タイムトラベル失敗！
+                        </div>
+                        <div class="result">
+                            <h3>失敗結果</h3>
+                            <p><strong>費用:</strong> ${data.cost}円（支払い済み）</p>
+                            <p><strong>取得商品数:</strong> 0個</p>
+                            <p><strong>残り所持金:</strong> ${data.new_money}円</p>
+                            <p style="color: red;"><strong>何らかの理由でタイムトラベルに失敗しました...</strong></p>
+                            ${data.game_over ? '<p style="color: red; font-weight: bold;">ゲームオーバー！</p>' : ''}
+                        </div>
+                    `;
                 } else {
                     let itemsHtml = '';
                     data.items.forEach(item => {
