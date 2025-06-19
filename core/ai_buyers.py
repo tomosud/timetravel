@@ -5,7 +5,7 @@
 
 import random
 from typing import Dict, List, Any, Tuple
-from .item_system import ItemSystem
+from core.item_system import ItemSystem
 
 
 class AIBuyer:

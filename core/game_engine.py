@@ -97,10 +97,13 @@ class GameEngine:
     
     def clear_sold_auction_items(self) -> None:
         """売却済みのオークションアイテムをクリア"""
+        before_count = len(self.state['auction_items'])
         self.state['auction_items'] = [
             auction_item for auction_item in self.state['auction_items']
             if not auction_item.get('sold', False)
         ]
+        after_count = len(self.state['auction_items'])
+        print(f"🔧 オークションアイテム整理: {before_count}個 → {after_count}個 (売却済み{before_count - after_count}個を削除)")
     
     def get_auction_item(self, item_id: int) -> Optional[Dict[str, Any]]:
         """オークションアイテムを検索"""

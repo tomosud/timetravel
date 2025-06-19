@@ -4,8 +4,8 @@
 """
 
 from typing import Dict, Any
-from ..core.game_engine import game_engine
-from ..core.item_system import item_system
+from core.game_engine import game_engine
+from core.item_system import item_system
 
 
 class GameAPI:

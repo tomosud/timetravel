@@ -148,8 +148,8 @@ class ItemSystem:
         if distance < 0 or distance > 50000:
             return False, "距離は0〜50000kmの範囲で指定してください"
         
-        if ufo_size < 1.0 or ufo_size > 100.0:
-            return False, "UFOサイズは1.0〜100.0倍の範囲で指定してください"
+        if ufo_size < 1.0 or ufo_size > 10.0:
+            return False, "UFOサイズは1.0〜10.0倍の範囲で指定してください"
         
         return True, ""
     
@@ -192,8 +192,8 @@ class ItemSystem:
                 'message': "タイムトラベルに失敗しました。お金は消費されましたが、商品は取得できませんでした。"
             }
         
-        # 成功時の商品生成
-        item_count = max(1, int(ufo_size))
+        # 成功時の商品生成（最大8個まで）
+        item_count = max(1, min(8, int(ufo_size)))
         items = cls.generate_items(years, distance, item_count)
         
         return {

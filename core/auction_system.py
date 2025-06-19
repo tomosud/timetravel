@@ -5,8 +5,8 @@
 
 import time
 from typing import Dict, List, Any, Tuple
-from .ai_buyers import ai_buyer_manager
-from .item_system import ItemSystem
+from core.ai_buyers import ai_buyer_manager
+from core.item_system import ItemSystem
 
 
 class AuctionSystem:
@@ -144,6 +144,11 @@ class AuctionSystem:
         # 勝者の入札履歴に記録
         if winner_buyer:
             winner_buyer.record_bid(item['id'], final_price, True)
+        
+        if verbose:
+            if not sold:
+                print(f"❌ 売却失敗 (入札: {bid_count}回)")
+                print(f"💡 商品はオークションに残り続けます")
         
         return result
     

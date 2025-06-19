@@ -154,8 +154,8 @@
 
             <div class="form-group">
                 <label for="ufo-size">UFOサイズ倍率:</label>
-                <input type="number" id="ufo-size" name="ufo_size" min="1" max="100" step="0.1" value="1.0" required>
-                <small>1.0～100.0倍（サイズが大きいほど多くの商品を取得）</small>
+                <input type="number" id="ufo-size" name="ufo_size" min="1" max="10" step="0.1" value="1.0" required>
+                <small>1.0～10.0倍（サイズが大きいほど多くの商品を取得、最大8個まで）</small>
             </div>
 
             <div class="cost-display">
@@ -228,33 +228,49 @@
                             エラー: ${data.error}
                         </div>
                     `;
-                } else if (data.failed) {
+                } else if (data.failed || (data.data && data.data.failed)) {
+                    const cost = data.data ? data.data.cost : data.cost;
+                    const newMoney = data.data ? data.data.new_money : data.new_money;
+                    const gameOver = data.data ? data.data.game_over : data.game_over;
+                    
                     resultArea.innerHTML = `
                         <div class="error">
                             💥 タイムトラベル失敗！
                         </div>
                         <div class="result">
                             <h3>失敗結果</h3>
-                            <p><strong>費用:</strong> ${data.cost}円（支払い済み）</p>
+                            <p><strong>費用:</strong> ${cost}円（支払い済み）</p>
                             <p><strong>取得商品数:</strong> 0個</p>
-                            <p><strong>残り所持金:</strong> ${data.new_money}円</p>
+                            <p><strong>残り所持金:</strong> ${newMoney}円</p>
                             <p style="color: red;"><strong>何らかの理由でタイムトラベルに失敗しました...</strong></p>
-                            ${data.game_over ? '<p style="color: red; font-weight: bold;">ゲームオーバー！</p>' : ''}
+                            ${gameOver ? '<p style="color: red; font-weight: bold;">ゲームオーバー！</p>' : ''}
                         </div>
                     `;
+                    
+                    // 所持金を更新
+                    document.getElementById('current-money').textContent = newMoney;
                 } else {
                     let itemsHtml = '';
-                    data.items.forEach(item => {
-                        itemsHtml += `
-                            <div class="item">
-                                <strong>ID:</strong> ${item.id}<br>
-                                <strong>ジャンル:</strong> ${item.genre}<br>
-                                <strong>状態:</strong> ${item.condition}<br>
-                                <strong>希少性:</strong> ${item.rarity}<br>
-                                <strong>推定価値:</strong> ${Math.round(item.base_value)}円
-                            </div>
-                        `;
-                    });
+                    const items = data.data ? data.data.items : data.items;
+                    if (items && items.length > 0) {
+                        items.forEach(item => {
+                            itemsHtml += `
+                                <div class="item">
+                                    <strong>ID:</strong> ${item.id}<br>
+                                    <strong>ジャンル:</strong> ${item.genre}<br>
+                                    <strong>状態:</strong> ${item.condition}<br>
+                                    <strong>希少性:</strong> ${item.rarity}<br>
+                                    <strong>推定価値:</strong> ${Math.round(item.base_value || item.estimated_price)}円
+                                </div>
+                            `;
+                        });
+                    } else {
+                        itemsHtml = '<p>アイテムが取得できませんでした</p>';
+                    }
+                    
+                    const cost = data.data ? data.data.cost : data.cost;
+                    const newMoney = data.data ? data.data.new_money : data.new_money;
+                    const itemCount = data.data ? data.data.item_count : (data.items ? data.items.length : 0);
                     
                     resultArea.innerHTML = `
                         <div class="success">
@@ -262,9 +278,9 @@
                         </div>
                         <div class="result">
                             <h3>取得結果</h3>
-                            <p><strong>費用:</strong> ${data.cost}円</p>
-                            <p><strong>取得商品数:</strong> ${data.items.length}個</p>
-                            <p><strong>残り所持金:</strong> ${data.new_money}円</p>
+                            <p><strong>費用:</strong> ${cost}円</p>
+                            <p><strong>取得商品数:</strong> ${itemCount}個</p>
+                            <p><strong>残り所持金:</strong> ${newMoney}円</p>
                             <div class="items-list">
                                 <h4>取得した商品:</h4>
                                 ${itemsHtml}
@@ -273,7 +289,7 @@
                     `;
                     
                     // 所持金を更新
-                    document.getElementById('current-money').textContent = data.new_money;
+                    document.getElementById('current-money').textContent = newMoney;
                 }
                 
                 buyBtn.disabled = false;

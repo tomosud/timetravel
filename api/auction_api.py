@@ -4,9 +4,9 @@
 """
 
 from typing import Dict, Any, List
-from ..core.game_engine import game_engine
-from ..core.auction_system import auction_system
-from ..core.item_system import item_system
+from core.game_engine import game_engine
+from core.auction_system import auction_system
+from core.item_system import item_system
 
 
 class AuctionAPI:
@@ -81,6 +81,9 @@ class AuctionAPI:
             total_revenue = 0
             total_profit = 0
             sold_count = 0
+            failed_count = 0
+            
+            print(f"\n🔍 オークション結果処理開始:")
             
             for result in results:
                 if result['sold']:
@@ -99,9 +102,22 @@ class AuctionAPI:
                         'final_price': revenue,
                         'winner_id': result['winner_id']
                     })
+                    
+                    print(f"   ✅ 商品ID:{result['item_id']} 売却完了 → オークションから削除")
+                else:
+                    failed_count += 1
+                    # 売却失敗した商品の現在価格を更新（スタート価格のまま）
+                    game_engine.update_auction_item(result['item_id'], {
+                        'bid_count': result['bid_count'],
+                        'current_price': result['start_price']  # 入札がないのでスタート価格のまま
+                    })
+                    
+                    print(f"   ❌ 商品ID:{result['item_id']} 売却失敗 → オークションに残留")
             
-            # 売却済みアイテムをクリア
+            # 売却済みアイテムのみをクリア（失敗したものは残す）
             game_engine.clear_sold_auction_items()
+            
+            print(f"🔍 処理後のオークションアイテム数: {len(game_engine.get_state()['auction_items'])}個")
             
             return {
                 'success': True,

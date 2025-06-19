@@ -4,8 +4,8 @@
 """
 
 from typing import Dict, Any
-from ..core.game_engine import game_engine
-from ..core.item_system import item_system
+from core.game_engine import game_engine
+from core.item_system import item_system
 
 
 class TravelAPI:
@@ -37,7 +37,7 @@ class TravelAPI:
                     },
                     'current_money': current_money,
                     'affordable': cost <= current_money,
-                    'estimated_items': max(1, int(ufo_size)),
+                    'estimated_items': max(1, min(8, int(ufo_size))),
                     'rarity_multiplier': item_system.calculate_rarity_multiplier(years, distance)
                 }
             }
@@ -58,7 +58,7 @@ class TravelAPI:
             
             # 期待値計算
             rarity_multiplier = item_system.calculate_rarity_multiplier(years, distance)
-            estimated_items = max(1, int(ufo_size))
+            estimated_items = max(1, min(8, int(ufo_size)))
             
             # 期待値範囲（概算）
             min_value_per_item = 100 * 0.6 * rarity_multiplier  # 最低値×劣化×レア度
@@ -222,7 +222,7 @@ class TravelAPI:
             
             # 高リスク・高リターン
             if current_money >= 1000:
-                risky_params = {'years': 100, 'distance': 2000, 'ufo_size': 3.0}
+                risky_params = {'years': 100, 'distance': 2000, 'ufo_size': 5.0}
                 risky_cost = item_system.calculate_travel_cost(**risky_params)
                 if risky_cost <= current_money * 0.8:  # 資金の80%以下
                     recommendations.append({

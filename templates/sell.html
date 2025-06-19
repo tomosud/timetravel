@@ -453,7 +453,9 @@
                     let resultsHtml = '';
                     let totalProfit = 0;
                     
-                    data.results.forEach(result => {
+                    const results = data.data ? data.data.results : data.results;
+                    if (results && results.length > 0) {
+                        results.forEach(result => {
                         const resultClass = result.sold ? 'sold' : '';
                         resultsHtml += `
                             <div class="result-item ${resultClass}">
@@ -465,10 +467,16 @@
                             </div>
                         `;
                         
-                        if (result.sold) {
-                            totalProfit += result.profit;
-                        }
-                    });
+                            if (result.sold) {
+                                totalProfit += result.profit;
+                            }
+                        });
+                    } else {
+                        resultsHtml = '<p>オークション結果を取得できませんでした</p>';
+                    }
+                    
+                    const newMoney = data.data ? data.data.new_money : data.new_money;
+                    const summary = data.data ? data.data.summary : data.summary;
                     
                     resultArea.innerHTML = `
                         <div class="success">
@@ -476,8 +484,8 @@
                         </div>
                         <div class="result">
                             <h3>オークション結果</h3>
-                            <p><strong>総利益:</strong> ${Math.round(totalProfit)}円</p>
-                            <p><strong>新しい所持金:</strong> ${Math.round(data.new_money)}円</p>
+                            <p><strong>総利益:</strong> ${Math.round(summary ? summary.total_profit : totalProfit)}円</p>
+                            <p><strong>新しい所持金:</strong> ${Math.round(newMoney)}円</p>
                             <div class="items-list">
                                 <h4>各商品の結果:</h4>
                                 ${resultsHtml}
@@ -486,31 +494,33 @@
                     `;
                     
                     // 所持金を更新
-                    document.getElementById('current-money').textContent = Math.round(data.new_money);
+                    document.getElementById('current-money').textContent = Math.round(newMoney);
                     
                     // 成功した商品の行をクリア
-                    data.results.forEach(result => {
-                        if (result.sold) {
-                            for (let i = 0; i < 8; i++) {
-                                if (document.getElementById(`item-select-${i}`).value == result.item_id) {
-                                    document.getElementById(`item-select-${i}`).value = '';
-                                    document.getElementById(`price-${i}`).value = '';
-                                    document.getElementById(`bid-count-${i}`).textContent = '-';
-                                    document.getElementById(`current-price-${i}`).textContent = '-';
-                                    break;
+                    if (results && results.length > 0) {
+                        results.forEach(result => {
+                            if (result.sold) {
+                                for (let i = 0; i < 8; i++) {
+                                    if (document.getElementById(`item-select-${i}`).value == result.item_id) {
+                                        document.getElementById(`item-select-${i}`).value = '';
+                                        document.getElementById(`price-${i}`).value = '';
+                                        document.getElementById(`bid-count-${i}`).textContent = '-';
+                                        document.getElementById(`current-price-${i}`).textContent = '-';
+                                        break;
+                                    }
+                                }
+                            } else {
+                                // 売却失敗の場合は入札情報を更新
+                                for (let i = 0; i < 8; i++) {
+                                    if (document.getElementById(`item-select-${i}`).value == result.item_id) {
+                                        document.getElementById(`bid-count-${i}`).textContent = result.bid_count;
+                                        document.getElementById(`current-price-${i}`).textContent = Math.round(result.final_price) + '円';
+                                        break;
+                                    }
                                 }
                             }
-                        } else {
-                            // 売却失敗の場合は入札情報を更新
-                            for (let i = 0; i < 8; i++) {
-                                if (document.getElementById(`item-select-${i}`).value == result.item_id) {
-                                    document.getElementById(`bid-count-${i}`).textContent = result.bid_count;
-                                    document.getElementById(`current-price-${i}`).textContent = Math.round(result.final_price) + '円';
-                                    break;
-                                }
-                            }
-                        }
-                    });
+                        });
+                    }
                     
                     // 重複選択防止：選択肢を更新
                     updateAvailableOptions();
