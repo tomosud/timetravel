@@ -143,13 +143,13 @@
             <div class="form-group">
                 <label for="years">年数差（何年前に行くか）:</label>
                 <input type="number" id="years" name="years" min="1" max="100" value="10" required>
-                <small>1年 = 1円のコスト</small>
+                <small>距離との乗算でコスト計算</small>
             </div>
 
             <div class="form-group">
                 <label for="distance">距離（東京からの距離km）:</label>
                 <input type="number" id="distance" name="distance" min="0" max="10000" value="100" required>
-                <small>1km = 1円のコスト</small>
+                <small>年数との乗算でコスト計算</small>
             </div>
 
             <div class="form-group">
@@ -177,7 +177,7 @@
             const distance = parseFloat(document.getElementById('distance').value) || 0;
             const ufoSize = parseFloat(document.getElementById('ufo-size').value) || 1.0;
             
-            const totalCost = (years + distance) * ufoSize;
+            const totalCost = (years * distance) * ufoSize;
             document.getElementById('total-cost').textContent = Math.round(totalCost);
             
             const currentMoney = parseFloat(document.getElementById('current-money').textContent);

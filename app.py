@@ -57,7 +57,7 @@ def initialize_ai_buyers():
 
 def calculate_travel_cost(years, distance, ufo_size):
     """タイムトラベルコストを計算"""
-    return (years + distance) * ufo_size
+    return (years * distance) * ufo_size
 
 def generate_item(years, distance):
     """年代と距離に基づいて商品を生成"""

@@ -320,6 +320,45 @@
                 document.getElementById(`bid-count-${slot}`).textContent = '-';
                 document.getElementById(`current-price-${slot}`).textContent = '-';
             }
+            
+            // 重複選択防止：他のスロットの選択肢を更新
+            updateAvailableOptions();
+        }
+
+        // 選択済み商品を他のスロットで選択不可にする
+        function updateAvailableOptions() {
+            // 現在選択されている商品IDを収集
+            const selectedItems = new Set();
+            for (let i = 0; i < 8; i++) {
+                const selectedValue = document.getElementById(`item-select-${i}`).value;
+                if (selectedValue) {
+                    selectedItems.add(selectedValue);
+                }
+            }
+            
+            // 各スロットのオプションを更新
+            for (let i = 0; i < 8; i++) {
+                const select = document.getElementById(`item-select-${i}`);
+                const currentValue = select.value;
+                
+                // 各オプションの有効/無効を設定
+                for (let j = 0; j < select.options.length; j++) {
+                    const option = select.options[j];
+                    if (option.value === '') {
+                        // 空の選択肢は常に有効
+                        option.disabled = false;
+                    } else if (option.value === currentValue) {
+                        // 現在選択中の商品は有効
+                        option.disabled = false;
+                    } else if (selectedItems.has(option.value)) {
+                        // 他のスロットで選択済みの商品は無効
+                        option.disabled = true;
+                    } else {
+                        // その他は有効
+                        option.disabled = false;
+                    }
+                }
+            }
         }
 
         // 出品取り消し
@@ -344,6 +383,9 @@
                     document.getElementById(`price-${slot}`).value = '';
                     document.getElementById(`bid-count-${slot}`).textContent = '-';
                     document.getElementById(`current-price-${slot}`).textContent = '-';
+                    
+                    // 重複選択防止：選択肢を更新
+                    updateAvailableOptions();
                     
                     // ページをリロードして在庫を更新
                     location.reload();
@@ -469,6 +511,9 @@
                             }
                         }
                     });
+                    
+                    // 重複選択防止：選択肢を更新
+                    updateAvailableOptions();
                 }
                 
                 auctionBtn.disabled = false;
@@ -488,6 +533,7 @@
 
         // 初期化
         loadExistingAuctions();
+        updateAvailableOptions();
     </script>
 </body>
 </html>
