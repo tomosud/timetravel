@@ -87,6 +87,46 @@
 2. app.py: generate_item関数でレア度計算式を改善
 3. 距離と年数の組み合わせでレア度倍率を動的計算
 
+## リファクタリング計画（2025/6/19 21:38）
+
+### 🏗️ アーキテクチャ分離
+**目標**: ゲームロジックと表示を明確に分離し、UI仕様の置き換えを容易にする
+
+#### ファイル分割計画（500行制限対応）
+```
+timetravel/
+├── core/                    # ゲームロジック層
+│   ├── game_engine.py      # ゲーム状態管理（<400行）
+│   ├── item_system.py      # 商品システム（<400行）
+│   ├── auction_system.py   # オークションシステム（<400行）
+│   └── ai_buyers.py        # AIバイヤーロジック（<400行）
+├── api/                     # API層（JSON入出力）
+│   ├── game_api.py         # ゲーム状態API（<400行）
+│   ├── travel_api.py       # タイムトラベルAPI（<400行）
+│   └── auction_api.py      # オークションAPI（<400行）
+├── web/                     # Web UI層
+│   ├── app.py              # Flask エントリーポイント（<400行）
+│   └── templates/          # HTMLテンプレート
+└── cli/                     # CLI UI層（将来拡張）
+    └── game_cli.py         # コマンドライン版
+```
+
+#### JSON API設計
+- **ゲーム状態**: `GET /api/game/state` → ゲーム状況をJSON返却
+- **タイムトラベル**: `POST /api/travel` → 購入パラメータ受信、結果JSON返却
+- **オークション**: `POST /api/auction/start` → 出品情報受信、結果JSON返却
+
+#### オークション詳細ログ機能
+- Python側で各入札をprintし、バランス調整用の詳細情報を提供
+- 入札者、商品、価格変動、結果などをリアルタイム出力
+
+### 📋 実装ステップ
+1. **core/game_engine.py**: ゲーム状態管理クラス作成
+2. **core/item_system.py**: 商品生成・管理システム
+3. **core/auction_system.py**: オークションロジック（ログ付き）
+4. **api/**: JSON API層実装
+5. **web/app.py**: 既存Flaskアプリを薄いラッパーに変更
+
 ---
 
 ## 概要
