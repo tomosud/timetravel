@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>タイムトラベル仕入れ・オークションゲーム</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .game-stats {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .mode-buttons {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .mode-button {
+            flex: 1;
+            padding: 40px;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        .mode-button:hover {
+            background-color: #2980b9;
+        }
+        .mode-button.sell {
+            background-color: #e74c3c;
+        }
+        .mode-button.sell:hover {
+            background-color: #c0392b;
+        }
+        .inventory {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .inventory-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .inventory-table th,
+        .inventory-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        .inventory-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        .inventory-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        .game-over {
+            background-color: #e74c3c;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .reset-button {
+            background-color: #95a5a6;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        .reset-button:hover {
+            background-color: #7f8c8d;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>タイムトラベル仕入れ・オークションゲーム</h1>
+        <p>過去にタイムトラベルして商品を仕入れ、現代で売却して利益を得よう！</p>
+    </div>
+
+    <div class="game-stats">
+        <h2>ゲーム状況</h2>
+        <p><strong>所持金:</strong> {{ game_state.money }}円</p>
+        <p><strong>在庫数:</strong> {{ game_state.inventory|length }}個</p>
+        <p><strong>出品中:</strong> {{ game_state.auction_items|length }}個</p>
+    </div>
+
+    {% if game_state.game_over %}
+        <div class="game-over">
+            ゲームオーバー！
+            <br>
+            お金が0円以下になりました。
+            <br>
+            <button class="reset-button" onclick="resetGame()">ゲームリセット</button>
+        </div>
+    {% else %}
+        <div class="mode-buttons">
+            <a href="/buy" class="mode-button">
+                🚀 買う<br>
+                <small>タイムトラベルして商品を仕入れる</small>
+            </a>
+            <a href="/sell" class="mode-button sell">
+                💰 売る<br>
+                <small>オークションで商品を売却する</small>
+            </a>
+        </div>
+    {% endif %}
+
+    {% if game_state.inventory %}
+        <div class="inventory">
+            <h3>在庫一覧</h3>
+            <table class="inventory-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>ジャンル</th>
+                        <th>状態</th>
+                        <th>希少性</th>
+                        <th>推定価値</th>
+                        <th>取得年代</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in game_state.inventory %}
+                        <tr>
+                            <td>{{ item.id }}</td>
+                            <td>{{ item.genre }}</td>
+                            <td>{{ item.condition }}</td>
+                            <td>{{ item.rarity }}</td>
+                            <td>{{ "%.0f"|format(item.base_value) }}円</td>
+                            <td>{{ item.years }}年前</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+
+    {% if game_state.auction_items %}
+        <div class="inventory">
+            <h3>出品中の商品</h3>
+            <table class="inventory-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>ジャンル</th>
+                        <th>状態</th>
+                        <th>希少性</th>
+                        <th>開始価格</th>
+                        <th>現在価格</th>
+                        <th>入札数</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for auction_item in game_state.auction_items %}
+                        <tr>
+                            <td>{{ auction_item.item.id }}</td>
+                            <td>{{ auction_item.item.genre }}</td>
+                            <td>{{ auction_item.item.condition }}</td>
+                            <td>{{ auction_item.item.rarity }}</td>
+                            <td>{{ "%.0f"|format(auction_item.start_price) }}円</td>
+                            <td>{{ "%.0f"|format(auction_item.current_price) }}円</td>
+                            <td>{{ auction_item.bid_count }}回</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+
+    <script>
+        function resetGame() {
+            if (confirm('ゲームをリセットしますか？全ての進行状況が失われます。')) {
+                fetch('/api/reset')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        }
+                    });
+            }
+        }
+    </script>
+</body>
+</html>

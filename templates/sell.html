@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>売るモード - タイムトラベル仕入れゲーム</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background-color: #e74c3c;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .game-stats {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .back-button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #95a5a6;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .back-button:hover {
+            background-color: #7f8c8d;
+        }
+        .auction-section {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .auction-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        .auction-table th,
+        .auction-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        .auction-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        .auction-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        .item-select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .price-input {
+            width: 100px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: right;
+        }
+        .auction-button {
+            background-color: #e74c3c;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 20px 0;
+            transition: background-color 0.3s;
+        }
+        .auction-button:hover {
+            background-color: #c0392b;
+        }
+        .auction-button:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+        .cancel-button {
+            background-color: #95a5a6;
+            color: white;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 3px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .cancel-button:hover {
+            background-color: #7f8c8d;
+        }
+        .inventory-section {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .inventory-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .inventory-table th,
+        .inventory-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        .inventory-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        .inventory-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        .result {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .error {
+            background-color: #e74c3c;
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .success {
+            background-color: #2ecc71;
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .result-item {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            border-left: 4px solid #e74c3c;
+        }
+        .sold {
+            border-left-color: #2ecc71;
+        }
+        .no-inventory {
+            text-align: center;
+            color: #7f8c8d;
+            font-style: italic;
+            padding: 40px;
+        }
+    </style>
+</head>
+<body>
+    <a href="/" class="back-button">← メインに戻る</a>
+
+    <div class="header">
+        <h1>💰 売るモード</h1>
+        <p>オークションで商品を売却して利益を得よう！</p>
+    </div>
+
+    <div class="game-stats">
+        <h3>現在の状況</h3>
+        <p><strong>所持金:</strong> <span id="current-money">{{ game_state.money }}</span>円</p>
+        <p><strong>在庫数:</strong> <span id="inventory-count">{{ inventory|length }}</span>個</p>
+        <p><strong>出品中:</strong> <span id="auction-count">{{ auction_items|length }}</span>個</p>
+    </div>
+
+    <div class="auction-section">
+        <h3>オークション出品設定（最大8個まで）</h3>
+        <table class="auction-table">
+            <thead>
+                <tr>
+                    <th>出品物</th>
+                    <th>開始価格</th>
+                    <th>入札数</th>
+                    <th>現在価格</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="auction-table-body">
+                <!-- 8行のオークション枠 -->
+                {% for i in range(8) %}
+                <tr>
+                    <td>
+                        <select class="item-select" id="item-select-{{ i }}" onchange="updatePrice({{ i }})">
+                            <option value="">商品を選択してください</option>
+                            {% for item in inventory %}
+                            <option value="{{ item.id }}" data-value="{{ item.base_value }}">
+                                ID:{{ item.id }} - {{ item.genre }} ({{ item.condition }}/{{ item.rarity }}) - 推定:{{ "%.0f"|format(item.base_value) }}円
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td>
+                        <input type="number" class="price-input" id="price-{{ i }}" min="1" placeholder="価格">
+                    </td>
+                    <td id="bid-count-{{ i }}">-</td>
+                    <td id="current-price-{{ i }}">-</td>
+                    <td>
+                        <button class="cancel-button" onclick="cancelItem({{ i }})">取消</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <button class="auction-button" id="auction-btn" onclick="startAuction()">
+            ⏰ 1分間オークション開始！
+        </button>
+    </div>
+
+    {% if inventory %}
+    <div class="inventory-section">
+        <h3>在庫一覧</h3>
+        <table class="inventory-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>ジャンル</th>
+                    <th>状態</th>
+                    <th>希少性</th>
+                    <th>推定価値</th>
+                    <th>取得年代</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in inventory %}
+                <tr>
+                    <td>{{ item.id }}</td>
+                    <td>{{ item.genre }}</td>
+                    <td>{{ item.condition }}</td>
+                    <td>{{ item.rarity }}</td>
+                    <td>{{ "%.0f"|format(item.base_value) }}円</td>
+                    <td>{{ item.years }}年前</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="inventory-section">
+        <div class="no-inventory">
+            在庫がありません。まず「買うモード」で商品を仕入れてください。
+        </div>
+    </div>
+    {% endif %}
+
+    <div id="result-area"></div>
+
+    <!-- データを JavaScript に渡すための script タグ -->
+    <script type="application/json" id="auction-data">{{ auction_items|tojson|safe }}</script>
+
+    <script>
+        // オークションデータを取得
+        const auctionData = JSON.parse(document.getElementById('auction-data').textContent);
+
+        // 既存の出品商品を表示
+        function loadExistingAuctions() {
+            auctionData.forEach((auctionItem, index) => {
+                const slot = findSlotForItem(auctionItem.item.id);
+                if (slot !== -1) {
+                    document.getElementById(`item-select-${slot}`).value = auctionItem.item.id;
+                    document.getElementById(`price-${slot}`).value = auctionItem.start_price;
+                    document.getElementById(`bid-count-${slot}`).textContent = auctionItem.bid_count;
+                    document.getElementById(`current-price-${slot}`).textContent = Math.round(auctionItem.current_price) + '円';
+                }
+            });
+        }
+
+        function findSlotForItem(itemId) {
+            for (let i = 0; i < 8; i++) {
+                const select = document.getElementById(`item-select-${i}`);
+                if (select.value == itemId) {
+                    return i;
+                }
+            }
+            // 空きスロットを探す
+            for (let i = 0; i < 8; i++) {
+                const select = document.getElementById(`item-select-${i}`);
+                if (select.value === '') {
+                    return i;
+                }
+            }
+            return -1;
+        }
+
+        // 商品選択時に推定価格を開始価格に設定
+        function updatePrice(slot) {
+            const select = document.getElementById(`item-select-${slot}`);
+            const selectedOption = select.options[select.selectedIndex];
+            const priceInput = document.getElementById(`price-${slot}`);
+            
+            if (selectedOption.value) {
+                const estimatedValue = selectedOption.getAttribute('data-value');
+                priceInput.value = Math.round(estimatedValue * 0.8); // 推定価値の80%を開始価格に
+            } else {
+                priceInput.value = '';
+                document.getElementById(`bid-count-${slot}`).textContent = '-';
+                document.getElementById(`current-price-${slot}`).textContent = '-';
+            }
+        }
+
+        // 出品取り消し
+        function cancelItem(slot) {
+            const itemSelect = document.getElementById(`item-select-${slot}`);
+            const itemId = itemSelect.value;
+            
+            if (!itemId) return;
+            
+            fetch('/api/auction/cancel', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ item_id: parseInt(itemId) })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // UI をリセット
+                    itemSelect.value = '';
+                    document.getElementById(`price-${slot}`).value = '';
+                    document.getElementById(`bid-count-${slot}`).textContent = '-';
+                    document.getElementById(`current-price-${slot}`).textContent = '-';
+                    
+                    // ページをリロードして在庫を更新
+                    location.reload();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+
+        // オークション開始
+        function startAuction() {
+            // 出品設定を収集
+            const auctionItems = [];
+            for (let i = 0; i < 8; i++) {
+                const itemId = document.getElementById(`item-select-${i}`).value;
+                const startPrice = document.getElementById(`price-${i}`).value;
+                
+                if (itemId && startPrice) {
+                    auctionItems.push({
+                        item_id: parseInt(itemId),
+                        start_price: parseFloat(startPrice)
+                    });
+                }
+            }
+            
+            if (auctionItems.length === 0) {
+                alert('出品する商品を選択してください。');
+                return;
+            }
+            
+            const auctionBtn = document.getElementById('auction-btn');
+            auctionBtn.disabled = true;
+            auctionBtn.textContent = '⏰ オークション設定中...';
+            
+            // まず出品設定を送信
+            fetch('/api/auction/setup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ items: auctionItems })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // オークション開始
+                    auctionBtn.textContent = '⏰ オークション実行中...';
+                    return fetch('/api/auction/start', { method: 'POST' });
+                } else {
+                    throw new Error('出品設定に失敗しました');
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const resultArea = document.getElementById('result-area');
+                
+                if (data.error) {
+                    resultArea.innerHTML = `
+                        <div class="error">
+                            エラー: ${data.error}
+                        </div>
+                    `;
+                } else {
+                    let resultsHtml = '';
+                    let totalProfit = 0;
+                    
+                    data.results.forEach(result => {
+                        const resultClass = result.sold ? 'sold' : '';
+                        resultsHtml += `
+                            <div class="result-item ${resultClass}">
+                                <strong>商品ID:</strong> ${result.item_id}<br>
+                                <strong>結果:</strong> ${result.sold ? '✅ 売却成功' : '❌ 売却失敗'}<br>
+                                <strong>最終価格:</strong> ${Math.round(result.final_price)}円<br>
+                                <strong>入札数:</strong> ${result.bid_count}回
+                                ${result.sold ? `<br><strong>利益:</strong> ${Math.round(result.profit)}円` : ''}
+                            </div>
+                        `;
+                        
+                        if (result.sold) {
+                            totalProfit += result.profit;
+                        }
+                    });
+                    
+                    resultArea.innerHTML = `
+                        <div class="success">
+                            ✅ オークション完了！
+                        </div>
+                        <div class="result">
+                            <h3>オークション結果</h3>
+                            <p><strong>総利益:</strong> ${Math.round(totalProfit)}円</p>
+                            <p><strong>新しい所持金:</strong> ${Math.round(data.new_money)}円</p>
+                            <div class="items-list">
+                                <h4>各商品の結果:</h4>
+                                ${resultsHtml}
+                            </div>
+                        </div>
+                    `;
+                    
+                    // 所持金を更新
+                    document.getElementById('current-money').textContent = Math.round(data.new_money);
+                    
+                    // 成功した商品の行をクリア
+                    data.results.forEach(result => {
+                        if (result.sold) {
+                            for (let i = 0; i < 8; i++) {
+                                if (document.getElementById(`item-select-${i}`).value == result.item_id) {
+                                    document.getElementById(`item-select-${i}`).value = '';
+                                    document.getElementById(`price-${i}`).value = '';
+                                    document.getElementById(`bid-count-${i}`).textContent = '-';
+                                    document.getElementById(`current-price-${i}`).textContent = '-';
+                                    break;
+                                }
+                            }
+                        } else {
+                            // 売却失敗の場合は入札情報を更新
+                            for (let i = 0; i < 8; i++) {
+                                if (document.getElementById(`item-select-${i}`).value == result.item_id) {
+                                    document.getElementById(`bid-count-${i}`).textContent = result.bid_count;
+                                    document.getElementById(`current-price-${i}`).textContent = Math.round(result.final_price) + '円';
+                                    break;
+                                }
+                            }
+                        }
+                    });
+                }
+                
+                auctionBtn.disabled = false;
+                auctionBtn.textContent = '⏰ 1分間オークション開始！';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('result-area').innerHTML = `
+                    <div class="error">
+                        通信エラーが発生しました: ${error.message}
+                    </div>
+                `;
+                auctionBtn.disabled = false;
+                auctionBtn.textContent = '⏰ 1分間オークション開始！';
+            });
+        }
+
+        // 初期化
+        loadExistingAuctions();
+    </script>
+</body>
+</html>
