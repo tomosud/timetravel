@@ -57,7 +57,7 @@ class AIBuyer:
         return round(interest, 3)
     
     def should_bid(self, item: Dict[str, Any], current_price: float, 
-                   interest_threshold: float = 0.8) -> bool:
+                   interest_threshold: float = 0.3) -> bool:
         """入札すべきかどうかを判定"""
         interest = self.calculate_interest(item, current_price)
         return interest >= interest_threshold
@@ -132,18 +132,18 @@ class AIBuyerManager:
             self.buyers.append(buyer)
     
     def get_interested_buyers(self, item: Dict[str, Any], 
-                            current_price: float) -> List[AIBuyer]:
+                            current_price: float, threshold: float = 0.3) -> List[AIBuyer]:
         """商品に興味を持つバイヤーを取得"""
         interested = []
         for buyer in self.buyers:
-            if buyer.should_bid(item, current_price):
+            if buyer.should_bid(item, current_price, threshold):
                 interested.append(buyer)
         return interested
     
     def simulate_bidding_round(self, item: Dict[str, Any], 
-                              current_price: float) -> Tuple[bool, float, AIBuyer]:
+                              current_price: float, threshold: float = 0.3) -> Tuple[bool, float, AIBuyer]:
         """入札ラウンドをシミュレート"""
-        interested_buyers = self.get_interested_buyers(item, current_price)
+        interested_buyers = self.get_interested_buyers(item, current_price, threshold)
         
         if not interested_buyers:
             return False, current_price, None

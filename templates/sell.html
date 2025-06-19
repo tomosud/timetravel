@@ -496,17 +496,30 @@
                     // 所持金を更新
                     document.getElementById('current-money').textContent = Math.round(newMoney);
                     
-                    // 成功した商品の行をクリア
+                    // 在庫数を更新（売却成功した商品数を減らす）
+                    const soldCount = results.filter(r => r.sold).length;
+                    const currentInventoryCount = parseInt(document.getElementById('inventory-count').textContent);
+                    document.getElementById('inventory-count').textContent = currentInventoryCount - soldCount;
+                    
+                    // 成功した商品の行をクリアし、プルダウンからも削除
                     if (results && results.length > 0) {
                         results.forEach(result => {
                             if (result.sold) {
+                                // 売却成功した商品を全プルダウンから削除
                                 for (let i = 0; i < 8; i++) {
-                                    if (document.getElementById(`item-select-${i}`).value == result.item_id) {
-                                        document.getElementById(`item-select-${i}`).value = '';
+                                    const select = document.getElementById(`item-select-${i}`);
+                                    if (select.value == result.item_id) {
+                                        select.value = '';
                                         document.getElementById(`price-${i}`).value = '';
                                         document.getElementById(`bid-count-${i}`).textContent = '-';
                                         document.getElementById(`current-price-${i}`).textContent = '-';
-                                        break;
+                                    }
+                                    // 全てのプルダウンから該当商品のオプションを削除
+                                    for (let j = 0; j < select.options.length; j++) {
+                                        if (select.options[j].value == result.item_id) {
+                                            select.removeChild(select.options[j]);
+                                            break;
+                                        }
                                     }
                                 }
                             } else {

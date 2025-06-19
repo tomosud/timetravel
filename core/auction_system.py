@@ -16,7 +16,7 @@ class AuctionSystem:
         """オークションシステム初期化"""
         self.auction_fee_rate = 0.1  # 手数料10%
         self.auction_duration_rounds = 10  # 1分間を10ラウンドでシミュレート
-        self.bid_threshold = 0.8  # 入札の興味度閾値
+        self.bid_threshold = 0.3  # 入札の興味度閾値（低めに設定）
     
     def create_auction_item(self, item: Dict[str, Any], start_price: float) -> Dict[str, Any]:
         """オークション出品アイテムを作成"""
@@ -52,6 +52,13 @@ class AuctionSystem:
             print(f"\n{'='*50}")
             print(f"オークション開始 - {len(auction_items)}個の商品")
             print(f"{'='*50}")
+            
+            # AIバイヤー統計情報を表示
+            buyer_stats = ai_buyer_manager.get_statistics()
+            print(f"📊 AIバイヤー統計:")
+            print(f"   - 総バイヤー数: {buyer_stats['total_buyers']}人")
+            print(f"   - ジャンル別興味: {buyer_stats['genre_interest']}")
+            print(f"   - 入札閾値: {self.bid_threshold}")
         
         results = []
         
@@ -99,8 +106,11 @@ class AuctionSystem:
         
         # 10ラウンドの入札シミュレート
         for round_num in range(1, self.auction_duration_rounds + 1):
+            # デバッグ: 興味を持つバイヤーの詳細を確認
+            interested_buyers = ai_buyer_manager.get_interested_buyers(item, current_price, self.bid_threshold)
+            
             had_bid, new_price, winning_buyer = ai_buyer_manager.simulate_bidding_round(
-                item, current_price
+                item, current_price, self.bid_threshold
             )
             
             if had_bid and new_price > current_price:
@@ -123,7 +133,24 @@ class AuctionSystem:
                     print(f"  R{round_num}: AIバイヤー#{winning_buyer.id} が {new_price:.2f}円で入札 "
                           f"(+{new_price - previous_price:.2f}円, 興味度: {interest:.2f})")
             elif verbose and round_num <= 3:
+                # デバッグ: なぜ入札されないかの詳細分析
                 print(f"  R{round_num}: 入札なし")
+                if round_num == 1:  # 最初のラウンドで詳細分析
+                    print(f"    💡 デバッグ情報:")
+                    print(f"       - 商品ジャンル: {item['genre']}")
+                    print(f"       - 現在価格: {current_price}円")
+                    print(f"       - 基本価値: {item['base_value']}円")
+                    print(f"       - 価値/価格比: {item['base_value']/current_price:.2f}")
+                    
+                    # 全バイヤーの興味度を確認
+                    buyers_analysis = []
+                    for i, buyer in enumerate(ai_buyer_manager.buyers[:5]):  # 最初の5人だけ表示
+                        interest = buyer.calculate_interest(item, current_price)
+                        genre_match = item['genre'] in buyer.interested_genres
+                        buyers_analysis.append(f"バイヤー#{i}: {interest:.2f} (ジャンル{'○' if genre_match else '×'})")
+                    
+                    print(f"       - 興味度サンプル: {', '.join(buyers_analysis)}")
+                    print(f"       - 興味を持つバイヤー数: {len(interested_buyers)}人")
         
         # オークション結果を決定
         sold = bid_count > 0
