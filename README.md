@@ -6,18 +6,13 @@
 
 ## 実装フェーズ
 
-現在の実装状況：**フェーズ0～4完了**
-
-- ✅ **フェーズ0**: 基盤構築（Flask、HTML/CSS/JavaScript、バッチファイル）
-- ✅ **フェーズ1**: 買うモードのコスト計算と商品生成ロジック
-- ✅ **フェーズ2**: 売るモードの価格評価とオークション結果判定
-- ✅ **フェーズ3**: 収益・資金管理とループ処理
-- ✅ **フェーズ4**: 商品保持・再出品ロジック
+**開発計画**: `developmentPlan.md`を参照
 
 ## 動作環境
 
 - Python 3.7以上
-- Windows環境（batファイル使用）
+- Windows環境（batファイル使用、venv_win仮想環境）
+- WSL/Linux環境（venv仮想環境）
 
 ## セットアップ・実行方法
 
@@ -34,12 +29,28 @@ run.bat
 
 ### 2. 手動セットアップ
 
+**Windows環境:**
 ```cmd
 # 仮想環境作成
-python -m venv venv
+python -m venv venv_win
 
 # 仮想環境アクティベート
-venv\Scripts\activate.bat
+venv_win\Scripts\activate.bat
+
+# 依存関係インストール
+pip install -r requirements.txt
+
+# ゲーム実行
+python entry.py
+```
+
+**WSL/Linux環境:**
+```bash
+# 仮想環境作成
+python3 -m venv venv
+
+# 仮想環境アクティベート
+source venv/bin/activate
 
 # 依存関係インストール
 pip install -r requirements.txt
@@ -118,24 +129,42 @@ timetravel/
 ├── app.py                # Flaskアプリケーション
 ├── requirements.txt      # 依存パッケージ
 ├── run.bat              # 実行用バッチファイル
-├── README.md            # このファイル
+├── README.md            # このファイル（成果物仕様）
+├── developmentPlan.md   # 開発計画・進行管理
 ├── templates/           # HTMLテンプレート
 │   ├── index.html       # メインページ
 │   ├── buy.html         # 買うモード
 │   └── sell.html        # 売るモード
-└── venv/                # 仮想環境（自動作成）
+├── venv/                # 仮想環境（WSL/Linux）
+└── venv_win/            # 仮想環境（Windows）
 ```
-
-## 今後の拡張予定
-
-- **フェーズ5**: LLM導入準備（商品名・説明文の自動生成）
-- **フェーズ6**: UIの改善（pyxelなどによるリッチなインターフェース）
 
 ## 開発ガイドライン
 
-- 1ファイル約400行以内で機能分割
-- Windows環境対応（`&&` 等の使用禁止）
-- 仮想環境による依存関係管理
+### 開発環境
+- `CROSS_PLATFORM_PYTHON_SETUP.md`に従ってセットアップされた環境で開発する
+- WSL/Linux環境とWindows環境の両方に対応
+
+### 仮想環境管理
+**2つの仮想環境を使い分け:**
+
+- **venv** (WSL/Linux環境用)
+  - WSL上のClaude Codeが使用
+  - 存在しない場合は自動作成: `python3 -m venv venv`
+  - 新しいパッケージが必要な場合：
+    1. `source venv/bin/activate`
+    2. `pip install [パッケージ名]`
+    3. `requirements.txt`に手動で記述追加
+
+- **venv_win** (Windows環境用)
+  - Windows環境で`run.bat`実行時に使用
+  - `requirements.txt`を参照して自動インストール
+  - 直接パッケージ追加は行わず、`requirements.txt`の内容に従う
+
+### コーディング規約
+- 1ファイル約400行程度にする。それ以上になるなら計画的にファイル分割を
+- Windows環境対応（`&&` 等のUnixコマンド使用禁止）
+- 仕様や計画が変わったらこのファイルを更新する事
 
 ## バージョン情報
 
