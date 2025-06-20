@@ -1,50 +1,49 @@
 @echo off
-chcp 65001 >nul
-echo タイムトラベル仕入れ・オークションゲームを起動しています...
+echo Setting up Windows Python environment...
 
-REM 仮想環境の存在チェック
-if not exist "venv\" (
-    echo 仮想環境が見つかりません。作成します...
-    python -m venv venv
+REM Check if venv_win exists, if not create it
+if not exist "venv_win" (
+    echo Creating virtual environment venv_win...
+    python -m venv venv_win
     if errorlevel 1 (
-        echo 仮想環境の作成に失敗しました。
+        echo Failed to create virtual environment.
         pause
         exit /b 1
     )
 )
 
-REM 仮想環境をアクティベート
-echo 仮想環境をアクティベートしています...
-call venv\Scripts\activate.bat
+REM Activate virtual environment
+echo Activating virtual environment...
+call venv_win\Scripts\activate.bat
 if errorlevel 1 (
-    echo 仮想環境のアクティベートに失敗しました。
+    echo Failed to activate virtual environment.
     pause
     exit /b 1
 )
 
-REM 必要なパッケージをインストール
-echo 必要なパッケージをチェック・インストールしています...
+REM Install/update requirements
+echo Installing requirements...
 pip install -r requirements.txt
 if errorlevel 1 (
-    echo パッケージのインストールに失敗しました。
+    echo Failed to install packages.
     pause
     exit /b 1
 )
 
-REM ブラウザを起動（バックグラウンド）
-echo ブラウザを起動します...
+REM Launch browser (background)
+echo Starting browser...
 timeout /t 2 /nobreak >nul
 start "" "http://127.0.0.1:5000"
 
-REM ゲームサーバーを起動
-echo ゲームサーバーを起動します...
+REM Start game server
+echo Starting game server...
 echo ============================================
-echo   ゲームURL: http://127.0.0.1:5000
-echo   終了するには: Ctrl+C を押してください
+echo   Game URL: http://127.0.0.1:5000
+echo   To quit: Press Ctrl+C
 echo ============================================
 python entry.py
 
-REM サーバー終了後の処理
+REM Post-server shutdown processing
 echo.
-echo ゲームサーバーが終了しました。
+echo Game server has been terminated.
 pause

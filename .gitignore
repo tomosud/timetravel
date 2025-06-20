@@ -127,11 +127,12 @@ celerybeat.pid
 # SageMath parsed files
 *.sage.py
 
-# Environments
+# Virtual Environments
 .env
 .venv
 env/
 venv/
+venv_win/
 ENV/
 env.bak/
 venv.bak/
@@ -179,3 +180,5 @@ cython_debug/
 #  refer to https://docs.cursor.com/context/ignore-files
 .cursorignore
 .cursorindexingignore
+/.claude
+/venv_win
