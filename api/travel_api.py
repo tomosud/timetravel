@@ -37,7 +37,7 @@ class TravelAPI:
                     },
                     'current_money': current_money,
                     'affordable': cost <= current_money,
-                    'estimated_items': max(1, min(8, int(ufo_size))),
+                    'estimated_items': random.randint(2, 5),  # 新仕様: 2-5個固定
                     'rarity_multiplier': item_system.calculate_rarity_multiplier(years, distance)
                 }
             }
@@ -56,17 +56,14 @@ class TravelAPI:
             if not cost_result['success']:
                 return cost_result
             
-            # 期待値計算
-            rarity_multiplier = item_system.calculate_rarity_multiplier(years, distance)
-            estimated_items = max(1, min(8, int(ufo_size)))
+            # 新仕様: 期待値計算
+            investment_cost = cost_result['data']['cost']
+            estimated_items = random.randint(2, 5)  # 2-5個固定
             
-            # 期待値範囲（概算）
-            min_value_per_item = 100 * 0.6 * rarity_multiplier  # 最低値×劣化×レア度
-            max_value_per_item = 1000 * 1.0 * rarity_multiplier  # 最高値×新品×レア度
-            
-            expected_min_total = min_value_per_item * estimated_items
-            expected_max_total = max_value_per_item * estimated_items
-            expected_avg_total = (expected_min_total + expected_max_total) / 2
+            # 新仕様: 投資額±10%の期待値
+            expected_min_total = investment_cost * 0.9
+            expected_max_total = investment_cost * 1.1
+            expected_avg_total = investment_cost
             
             return {
                 'success': True,
