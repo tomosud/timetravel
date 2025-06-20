@@ -1,0 +1,4 @@
+■worldcities.csv
+https://www.kaggle.com/datasets/viswanathanc/world-cities-datasets
+https://creativecommons.org/licenses/by/4.0/
+----
