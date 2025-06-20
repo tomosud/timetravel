@@ -6,7 +6,7 @@
 
 ## 実装フェーズ
 
-**開発計画**: `developmentPlan.md`を参照
+**開発計画**: [developmentPlan.md](./developmentPlan.md)を参照
 
 ## 動作環境
 
@@ -38,10 +38,10 @@ python -m venv venv_win
 venv_win\Scripts\activate.bat
 
 # 依存関係インストール
-pip install -r requirements.txt
+pip install -r ./requirements.txt
 
 # ゲーム実行
-python entry.py
+python ./entry.py
 ```
 
 **WSL/Linux環境:**
@@ -53,15 +53,15 @@ python3 -m venv venv
 source venv/bin/activate
 
 # 依存関係インストール
-pip install -r requirements.txt
+pip install -r ./requirements.txt
 
 # ゲーム実行
-python entry.py
+python ./entry.py
 ```
 
 ## 使用方法
 
-1. `run.bat` を実行
+1. `./run.bat` を実行
 2. ブラウザで `http://127.0.0.1:5000` にアクセス
 3. ゲーム開始！
 
@@ -141,30 +141,12 @@ timetravel/
 
 ## 開発ガイドライン
 
-### 開発環境
-- `CROSS_PLATFORM_PYTHON_SETUP.md`に従ってセットアップされた環境で開発する
-- WSL/Linux環境とWindows環境の両方に対応
+**開発の詳細な方針・規約**: [developmentPlan.md](./developmentPlan.md)を参照
 
-### 仮想環境管理
-**2つの仮想環境を使い分け:**
-
-- **venv** (WSL/Linux環境用)
-  - WSL上のClaude Codeが使用
-  - 存在しない場合は自動作成: `python3 -m venv venv`
-  - 新しいパッケージが必要な場合：
-    1. `source venv/bin/activate`
-    2. `pip install [パッケージ名]`
-    3. `requirements.txt`に手動で記述追加
-
-- **venv_win** (Windows環境用)
-  - Windows環境で`run.bat`実行時に使用
-  - `requirements.txt`を参照して自動インストール
-  - 直接パッケージ追加は行わず、`requirements.txt`の内容に従う
-
-### コーディング規約
-- 1ファイル約400行程度にする。それ以上になるなら計画的にファイル分割を
-- Windows環境対応（`&&` 等のUnixコマンド使用禁止）
-- 仕様や計画が変わったらこのファイルを更新する事
+### 基本方針
+- ゲームロジックとUIの完全分離
+- 最小限のインターフェースでゲームサイクル確立
+- 機能の小分け・段階的実装
 
 ## バージョン情報
 
