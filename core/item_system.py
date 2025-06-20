@@ -183,8 +183,8 @@ class ItemSystem:
     @classmethod
     def validate_travel_parameters(cls, years: int, distance: int, ufo_size: float) -> Tuple[bool, str]:
         """タイムトラベルパラメータの妥当性をチェック"""
-        if years < 1 or years > 1000:
-            return False, "年数は1〜1000年の範囲で指定してください"
+        if years < 1 or years > 1000000:
+            return False, "年数は1〜1000000年の範囲で指定してください"
         
         if distance < 0 or distance > 50000:
             return False, "距離は0〜50000kmの範囲で指定してください"
