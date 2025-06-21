@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>デバッグページ - タイムトラベル仕入れゲーム</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 10px;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background-color: #9b59b6;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .nav-button {
+            background-color: #8e44ad;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .nav-button:hover {
+            background-color: #732d91;
+        }
+        .debug-section {
+            background-color: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 4px solid #9b59b6;
+        }
+        .chart-container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            height: 400px;
+            position: relative;
+        }
+        .chart-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        #assetChart {
+            width: 100%;
+            height: 350px;
+        }
+        .turn-info {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .price-curve {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="header">
+        <h1>🔍 デバッグページ</h1>
+        <div class="nav-buttons">
+            <a href="/buy" class="nav-button">買うモード</a>
+            <a href="/sell" class="nav-button">売るモード</a>
+        </div>
+    </div>
+
+    <div class="debug-section">
+        <h3>ゲーム状態概要</h3>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <strong>所持金</strong><br>
+                {{ game_state.money }}円
+            </div>
+            <div class="stat-card">
+                <strong>在庫数</strong><br>
+                {{ game_state.statistics.inventory_count }}個
+            </div>
+            <div class="stat-card">
+                <strong>総利益</strong><br>
+                {{ game_state.statistics.total_profit }}円
+            </div>
+            <div class="stat-card">
+                <strong>総支出</strong><br>
+                {{ game_state.statistics.total_spent }}円
+            </div>
+            <div class="stat-card">
+                <strong>ターン数</strong><br>
+                {{ game_state.statistics.turn_count }}回
+            </div>
+            <div class="stat-card">
+                <strong>大ターン</strong><br>
+                {{ game_state.turn_info.major_turn }}
+            </div>
+            <div class="stat-card">
+                <strong>子ターン</strong><br>
+                {{ game_state.turn_info.minor_turn }}/{{ game_state.turn_info.minor_turns_total }}
+            </div>
+            <div class="stat-card">
+                <strong>現在価格倍率</strong><br>
+                {{ "%.2f"|format(game_state.turn_info.current_multiplier) }}x
+            </div>
+        </div>
+    </div>
+
+    <div class="debug-section">
+        <h3>ターン・価格曲線情報</h3>
+        <div class="turn-info">
+            <div>
+                <strong>進行状況:</strong> 
+                {% for i in range(game_state.turn_info.minor_turns_total) %}
+                    {% if i + 1 < game_state.turn_info.minor_turn %}
+                        ✓
+                    {% elif i + 1 == game_state.turn_info.minor_turn %}
+                        ●
+                    {% else %}
+                        ○
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div class="price-curve">
+            <strong>現在の価格曲線:</strong><br>
+            {% for multiplier in game_state.turn_info.price_curve %}
+                {% if loop.index == game_state.turn_info.minor_turn %}
+                    <span style="background-color: #9b59b6; color: white; padding: 2px 4px; border-radius: 3px;">{{ "%.2f"|format(multiplier) }}</span>
+                {% else %}
+                    {{ "%.2f"|format(multiplier) }}
+                {% endif %}
+                {% if not loop.last %} → {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="chart-container">
+        <div class="chart-title">資産推移グラフ</div>
+        <canvas id="assetChart"></canvas>
+    </div>
+
+    <div class="debug-section">
+        <h3>在庫詳細</h3>
+        {% if inventory %}
+        <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+            <thead>
+                <tr style="background-color: #f8f9fa;">
+                    <th style="border: 1px solid #ddd; padding: 8px;">ID</th>
+                    <th style="border: 1px solid #ddd; padding: 8px;">ジャンル</th>
+                    <th style="border: 1px solid #ddd; padding: 8px;">状態</th>
+                    <th style="border: 1px solid #ddd; padding: 8px;">希少性</th>
+                    <th style="border: 1px solid #ddd; padding: 8px;">推定価格</th>
+                    <th style="border: 1px solid #ddd; padding: 8px;">年数</th>
+                    <th style="border: 1px solid #ddd; padding: 8px;">距離</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in inventory %}
+                <tr>
+                    <td style="border: 1px solid #ddd; padding: 8px;">{{ item.id }}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">{{ item.genre }}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">{{ item.condition_name }}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">{{ item.rarity }}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">{{ item.estimated_price }}円</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">{{ item.years }}年前</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">{{ item.distance }}km</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="text-align: center; color: #7f8c8d; font-style: italic;">在庫がありません</p>
+        {% endif %}
+    </div>
+
+    <script>
+        // ゲームデータ
+        const gameState = {{ game_state | tojson | safe }};
+        
+        // 資産推移チャート
+        const ctx = document.getElementById('assetChart').getContext('2d');
+        
+        // サンプルデータ生成（実際のゲームではセッション記録が必要）
+        const chartData = generateAssetData(gameState);
+        
+        const assetChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: chartData.labels,
+                datasets: [
+                    {
+                        label: '総資産価値',
+                        data: chartData.totalAssets,
+                        borderColor: '#9b59b6',
+                        backgroundColor: 'rgba(155, 89, 182, 0.1)',
+                        borderWidth: 2,
+                        fill: true
+                    },
+                    {
+                        label: '所持金',
+                        data: chartData.money,
+                        borderColor: '#3498db',
+                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                        borderWidth: 2,
+                        fill: false
+                    },
+                    {
+                        label: '在庫価値',
+                        data: chartData.inventoryValue,
+                        borderColor: '#e74c3c',
+                        backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                        borderWidth: 2,
+                        fill: false
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: '大ターン.子ターン'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: '価値（円）'
+                        },
+                        beginAtZero: true
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                }
+            }
+        });
+
+        function generateAssetData(gameState) {
+            // 現在の状態から仮想的な推移データを生成
+            const currentMajor = gameState.turn_info.major_turn;
+            const currentMinor = gameState.turn_info.minor_turn;
+            const currentMoney = gameState.money;
+            const currentInventoryValue = calculateInventoryValue();
+            
+            const labels = [];
+            const totalAssets = [];
+            const money = [];
+            const inventoryValue = [];
+            
+            // 過去のデータをシミュレート（実際の実装では記録が必要）
+            let simMoney = 1000; // 初期値
+            let simInventory = 0;
+            
+            for (let major = 1; major <= currentMajor; major++) {
+                const maxMinor = (major === currentMajor) ? currentMinor : 8;
+                
+                for (let minor = 1; minor <= maxMinor; minor++) {
+                    const label = `${major}.${minor}`;
+                    labels.push(label);
+                    
+                    // 現在の点は実データ、それ以外は推定
+                    if (major === currentMajor && minor === currentMinor) {
+                        money.push(currentMoney);
+                        inventoryValue.push(currentInventoryValue);
+                        totalAssets.push(currentMoney + currentInventoryValue);
+                    } else {
+                        // 簡単な成長シミュレーション
+                        const growthFactor = 1 + (major - 1) * 0.1 + (minor - 1) * 0.02;
+                        const simTotal = 1000 * growthFactor;
+                        const moneyRatio = Math.max(0.3, 1 - (major - 1) * 0.1);
+                        
+                        simMoney = Math.floor(simTotal * moneyRatio);
+                        simInventory = Math.floor(simTotal * (1 - moneyRatio));
+                        
+                        money.push(simMoney);
+                        inventoryValue.push(simInventory);
+                        totalAssets.push(simTotal);
+                    }
+                }
+            }
+            
+            return { labels, totalAssets, money, inventoryValue };
+        }
+        
+        function calculateInventoryValue() {
+            // 現在の在庫価値を計算
+            const inventory = {{ inventory | tojson | safe }};
+            return inventory.reduce((total, item) => total + (item.estimated_price || 0), 0);
+        }
+    </script>
+</body>
+</html>

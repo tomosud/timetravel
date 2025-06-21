@@ -59,11 +59,23 @@ class GameEngine:
         return self.state['money'] <= 0 and len(self.state['inventory']) == 0
     
     def spend_money(self, amount: float) -> bool:
-        """お金を消費（成功時True、残高不足時False）"""
+        """お金を消費してターンを進める（成功時True、残高不足時False）"""
         if self.state['money'] >= amount:
+            print(f"[GameEngine] 資金消費前: {self.state['money']}円")
             self.state['money'] -= amount
             self.state['total_spent'] += amount
+            self.state['turn_count'] += 1
+            
+            # ターンシステムを進める
+            print(f"[GameEngine] ターン進行実行: turn_count={self.state['turn_count']}")
+            major_turn_completed = turn_system.advance_minor_turn()
+            if major_turn_completed:
+                print(f"[GameEngine] 🎉 大ターン完了！新しい大ターン開始")
+            
+            print(f"[GameEngine] 資金消費後: {self.state['money']}円")
             return True
+        
+        print(f"[GameEngine] 資金不足: 必要{amount}円、所持{self.state['money']}円")
         return False
     
     def earn_money(self, amount: float) -> None:

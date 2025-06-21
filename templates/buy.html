@@ -7,30 +7,53 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            max-width: 800px;
+            max-width: 1000px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 10px;
             background-color: #f5f5f5;
         }
         .header {
             background-color: #3498db;
             color: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
             text-align: center;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .nav-button {
+            background-color: #2980b9;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .nav-button:hover {
+            background-color: #1f6391;
         }
         .game-stats {
             background-color: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
         }
         .buy-form {
             background-color: white;
-            padding: 30px;
-            border-radius: 10px;
+            padding: 15px;
+            border-radius: 5px;
             margin-bottom: 20px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
@@ -124,17 +147,20 @@
     </style>
 </head>
 <body>
-    <a href="/" class="back-button">← メインに戻る</a>
-
     <div class="header">
         <h1>🚀 買うモード</h1>
-        <p>タイムトラベルして過去から商品を仕入れよう！</p>
+        <div class="nav-buttons">
+            <a href="/sell" class="nav-button">売るモード</a>
+            <a href="/debug" class="nav-button" style="background-color: #9b59b6;">デバッグ</a>
+        </div>
     </div>
 
     <div class="game-stats">
-        <h3>現在の状況</h3>
-        <p><strong>所持金:</strong> <span id="current-money">{{ game_state.money }}</span>円</p>
-        <p><strong>在庫数:</strong> {{ game_state.inventory|length }}個</p>
+        <div><strong>所持金:</strong> <span id="current-money">{{ game_state.money }}</span>円</div>
+        <div><strong>在庫:</strong> {{ game_state.inventory|length }}個</div>
+        <div><strong>大ターン:</strong> {{ game_state.turn_info.major_turn }}</div>
+        <div><strong>子ターン:</strong> {{ game_state.turn_info.minor_turn }}/{{ game_state.turn_info.minor_turns_total }}</div>
+        <div><strong>価格倍率:</strong> {{ "%.2f"|format(game_state.turn_info.current_multiplier) }}x</div>
     </div>
 
     <div class="buy-form">

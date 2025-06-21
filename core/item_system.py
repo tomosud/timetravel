@@ -198,7 +198,9 @@ class ItemSystem:
     @classmethod
     def simulate_travel_failure(cls) -> bool:
         """タイムトラベル失敗をシミュレート（10%の確率）"""
-        return random.random() < 0.1
+        # 2025-06-21: 一時的に失敗機能を停止（テスト・開発用）
+        # return random.random() < 0.1
+        return False  # 常に成功
     
     @classmethod
     def distribute_value_across_items(cls, target_total: float, num_items: int) -> List[float]:

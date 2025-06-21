@@ -9,23 +9,45 @@
             font-family: Arial, sans-serif;
             max-width: 1200px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 10px;
             background-color: #f5f5f5;
         }
         .header {
             background-color: #e74c3c;
             color: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            text-align: center;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .nav-button {
+            background-color: #c0392b;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .nav-button:hover {
+            background-color: #a93226;
         }
         .game-stats {
             background-color: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
         }
         .back-button {
             display: inline-block;
@@ -41,10 +63,10 @@
         }
         .auction-section {
             background-color: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
         .auction-table {
             width: 100%;
@@ -173,18 +195,20 @@
     </style>
 </head>
 <body>
-    <a href="/" class="back-button">← メインに戻る</a>
-
     <div class="header">
         <h1>💰 売るモード</h1>
-        <p>オークションで商品を売却して利益を得よう！</p>
+        <div class="nav-buttons">
+            <a href="/buy" class="nav-button">買うモード</a>
+            <a href="/debug" class="nav-button" style="background-color: #9b59b6;">デバッグ</a>
+        </div>
     </div>
 
     <div class="game-stats">
-        <h3>現在の状況</h3>
-        <p><strong>所持金:</strong> <span id="current-money">{{ game_state.money }}</span>円</p>
-        <p><strong>在庫数:</strong> <span id="inventory-count">{{ inventory|length }}</span>個</p>
-        <p><strong>出品中:</strong> <span id="auction-count">{{ auction_items|length }}</span>個</p>
+        <div><strong>所持金:</strong> <span id="current-money">{{ game_state.money }}</span>円</div>
+        <div><strong>在庫:</strong> <span id="inventory-count">{{ inventory|length }}</span>個</div>
+        <div><strong>出品中:</strong> <span id="auction-count">{{ auction_items|length }}</span>個</div>
+        <div><strong>大ターン:</strong> {{ game_state.turn_info.major_turn }}</div>
+        <div><strong>子ターン:</strong> {{ game_state.turn_info.minor_turn }}/{{ game_state.turn_info.minor_turns_total }}</div>
     </div>
 
     <div class="auction-section">
@@ -226,9 +250,14 @@
             </tbody>
         </table>
         
-        <button class="auction-button" id="auction-btn" onclick="startAuction()">
-            ⏰ 1分間オークション開始！
-        </button>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <button class="auction-button" id="auction-btn" onclick="startAuction()">
+                ⏰ 1分間オークション開始！
+            </button>
+            <button class="auto-list-button" onclick="autoListAll()" style="background-color: #f39c12; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">
+                🎯 全部出品
+            </button>
+        </div>
     </div>
 
     {% if inventory %}
@@ -552,6 +581,62 @@
                 auctionBtn.disabled = false;
                 auctionBtn.textContent = '⏰ 1分間オークション開始！';
             });
+        }
+
+        // 全部出品機能
+        function autoListAll() {
+            // 在庫データを取得（JavaScript側）
+            const inventorySelects = document.querySelectorAll('[id^="item-select-"]');
+            const availableItems = [];
+            
+            // 最初のselectから利用可能なアイテムを取得
+            const firstSelect = inventorySelects[0];
+            for (let option of firstSelect.options) {
+                if (option.value && option.value !== '' && !option.disabled) {
+                    availableItems.push({
+                        id: option.value,
+                        text: option.textContent,
+                        estimatedPrice: getEstimatedPriceFromOption(option)
+                    });
+                }
+            }
+            
+            // 利用可能なスロットを探して自動設定
+            let itemIndex = 0;
+            for (let slot = 0; slot < 8 && itemIndex < availableItems.length; slot++) {
+                const itemSelect = document.getElementById(`item-select-${slot}`);
+                const priceInput = document.getElementById(`price-${slot}`);
+                
+                // 既に設定済みのスロットはスキップ
+                if (itemSelect.value) {
+                    continue;
+                }
+                
+                const item = availableItems[itemIndex];
+                itemSelect.value = item.id;
+                const price = Math.floor(item.estimatedPrice * 0.9);
+                priceInput.value = price;
+                console.log(`[AutoList] アイテム${item.id}: 推定価格${item.estimatedPrice}円 → 設定価格${price}円`);
+                
+                itemIndex++;
+            }
+            
+            // 選択肢を更新
+            updateAvailableOptions();
+        }
+        
+        // テキストから推定価格を抽出する関数
+        function extractEstimatedPrice(text) {
+            const match = text.match(/推定価格:(\d+)円/);
+            return match ? parseInt(match[1]) : 100;
+        }
+        
+        // オプション要素から推定価格を取得する関数
+        function getEstimatedPriceFromOption(option) {
+            const priceAttr = option.getAttribute('data-estimated-price');
+            const price = priceAttr ? parseInt(priceAttr) : extractEstimatedPrice(option.textContent);
+            console.log(`[Debug] オプション価格取得: data-attr=${priceAttr}, テキスト抽出=${extractEstimatedPrice(option.textContent)}, 最終価格=${price}`);
+            return price;
         }
 
         // 初期化

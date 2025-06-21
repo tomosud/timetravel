@@ -111,7 +111,7 @@ class TravelAPI:
             if not travel_result['success']:
                 return travel_result
             
-            # お金を消費
+            # お金を消費（ターン進行含む）
             cost = travel_result['cost']
             if not game_engine.spend_money(cost):
                 return {
@@ -119,8 +119,7 @@ class TravelAPI:
                     'error': '資金が不足しています'
                 }
             
-            # ターン数を増加
-            game_engine.increment_turn()
+            print(f"[TravelAPI] 資金消費・ターン進行完了: {cost}円")
             
             # 失敗時の処理
             if travel_result['failed']:

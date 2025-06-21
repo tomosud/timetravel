@@ -14,9 +14,8 @@ app.secret_key = 'timetravel_game_secret_key'
 
 @app.route('/')
 def index():
-    """メインページ"""
-    result = game_api.get_game_state()
-    return render_template('index.html', game_state=result['data'])
+    """メインページ - 買うモードにリダイレクト"""
+    return redirect('/buy')
 
 @app.route('/buy')
 def buy_mode():
@@ -100,6 +99,16 @@ def api_auction_cancel():
         
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 400
+
+@app.route('/debug')
+def debug_mode():
+    """デバッグページ"""
+    game_result = game_api.get_game_state()
+    inventory_result = game_api.get_inventory()
+    
+    return render_template('debug.html',
+                         game_state=game_result['data'],
+                         inventory=inventory_result['data']['inventory'])
 
 @app.route('/api/reset')
 def api_reset():
