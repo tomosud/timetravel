@@ -6,6 +6,7 @@
 import random
 import time
 from typing import Dict, List, Any, Tuple
+from .turn_system import turn_system
 
 
 class ItemSystem:

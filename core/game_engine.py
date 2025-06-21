@@ -6,6 +6,7 @@
 import json
 from typing import Dict, List, Any, Optional
 import time
+from .turn_system import turn_system
 
 
 class GameEngine:
@@ -26,17 +27,24 @@ class GameEngine:
             'total_profit': 0,
             'total_spent': 0
         }
+        # ターンシステムもリセット
+        turn_system.reset_turns()
+        print(f"[GameEngine] ゲーム状態リセット完了")
     
     def get_state(self) -> Dict[str, Any]:
         """現在のゲーム状態を取得"""
         # ゲームオーバー判定を更新
         self.state['game_over'] = self.check_game_over()
         
+        # ターン情報を取得
+        turn_info = turn_system.get_turn_info()
+        
         return {
             'money': self.state['money'],
             'inventory': self.state['inventory'].copy(),
             'auction_items': self.state['auction_items'].copy(),
             'game_over': self.state['game_over'],
+            'turn_info': turn_info,
             'statistics': {
                 'turn_count': self.state['turn_count'],
                 'total_profit': self.state['total_profit'],
