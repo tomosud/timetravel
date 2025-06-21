@@ -122,6 +122,6 @@ timetravel/
 
 ### 🔧 開発者向け
 - 環境構築: [CROSS_PLATFORM_PYTHON_SETUP.md](./CROSS_PLATFORM_PYTHON_SETUP.md)
-- 分析資料: [analysis/](./analysis/)
+- 開発ツール: [tools/](./tools/) - テスト・デバッグ・分析ツール
 
 ---

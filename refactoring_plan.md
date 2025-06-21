@@ -177,6 +177,18 @@
 - ✅ PROJECT_STATUS.md:90,94 成長保証表記を可変成長に統一
 - ✅ PROJECT_STATUS.md:96 固定費説明追加
 
+### テストファイルtools/移動作業
+- ✅ tools/フォルダ作成
+- ✅ tools/tests/フォルダ作成
+- ✅ auto_invest_test.py → tools/tests/に移動
+- ✅ test_phase2_pricing.py → tools/tests/に移動
+- ✅ test_price_logic.py → tools/tests/に移動
+- ✅ debug/フォルダ → tools/debug/に移動
+- ✅ analysis/フォルダ → tools/analysis/に移動
+- ✅ run_cli.py, run_cli.bat削除
+- ✅ tools/README.md作成（ツール用途説明）
+- ✅ root README.mdにtools/案内追加
+
 ---
 
 **注意**: 作業中に矛盾や不明点があれば都度質問・決定を記録する
