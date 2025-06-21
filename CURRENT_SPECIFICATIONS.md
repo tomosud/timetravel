@@ -25,7 +25,7 @@
 
 ### パラメータ制限
 - **年数**: 1～1,000,000年
-- **距離**: 0～50,000km（上限100万km設定済み）
+- **距離**: 0～1,000,000km
 
 ### 商品生成
 - **個数**: 2～5個（ランダム）
@@ -123,8 +123,9 @@ templates/ - UI層
 - `core/item_system.py` - 商品生成・価値計算  
 - `core/auction_system.py` - オークション・AIバイヤー
 - `core/game_engine.py` - 全体統合・状態管理
-- `templates/sell.html` - 売却UI（388行）
-- `templates/buy.html` - 購買UI（225行）
+- `templates/sell.html` - 売却UI（663行）
+- `templates/buy.html` - 購買UI（509行）
+- `templates/debug.html` - デバッグ情報表示
 
 ## 現在のバランス
 
@@ -145,6 +146,7 @@ templates/ - UI層
 - 目標倍率表示
 - 資産・固定費表示
 - 自動投資機能
+- `/api/auto_invest` APIエンドポイント
 
 ### 売却画面
 - 在庫一覧表示
