@@ -35,68 +35,66 @@ class TurnSystem:
         print(f"  乱数範囲: {self.RANDOM_MIN}～{self.RANDOM_MAX}")
         self._debug_current_state()
     
+    def _clamp(self, value: float, min_val: float, max_val: float) -> float:
+        """値を最小～最大に収めるユーティリティ"""
+        return max(min_val, min(max_val, value))
+    
+    def _generate_multipliers(self, target: float) -> List[float]:
+        """目標値targetを8ステップで達成するための乗数を作成"""
+        multipliers = []
+        current = 1.0
+        
+        for i in range(self.MINOR_TURNS_PER_MAJOR):
+            remaining = self.MINOR_TURNS_PER_MAJOR - i
+            # 残りステップで目標値に到達するのに必要な理想的な乗数
+            ideal = pow(target / current, 1.0 / remaining)
+            # 60%-140%の揺らぎを加える
+            factor = ideal * (0.6 + random.random() * 0.8)
+            # 0.5-2.0の範囲に制限
+            factor = self._clamp(factor, 0.5, 2.0)
+            
+            multipliers.append(factor)
+            current *= factor
+            
+        
+        return multipliers
+    
+    def _calc_cumulative(self, multipliers: List[float]) -> List[float]:
+        """乗数配列から各ステップ後の累積値を求める"""
+        cumulative = 1.0
+        result = []
+        for m in multipliers:
+            cumulative *= m
+            result.append(cumulative)
+        return result
+
     def generate_new_price_curve(self) -> List[float]:
-        """新しい価格倍率曲線を生成（フェーズ2: 可変目標倍率対応）"""
+        """新しい価格倍率曲線を生成（JSサンプル移植版）"""
         print(f"\n[TurnSystem] 大ターン{self.major_turn} - 新しい価格曲線を生成中...")
         print(f"  目標倍率: {self.target_multiplier:.2f}倍")
         
-        # トレンド要素の決定
-        trend_bias = 0.0
-        if self.ENABLE_TREND_BIAS:
-            trend_type = random.choice(['up', 'neutral', 'down'])
-            trend_bias = {
-                'up': self.TREND_STRENGTH,
-                'neutral': 0.0,
-                'down': -self.TREND_STRENGTH
-            }[trend_type]
-            print(f"  トレンド: {trend_type} (バイアス: {trend_bias:+.2f})")
+        # 複数回試行して最も良い結果を採用
+        best_multipliers = None
+        best_error = float('inf')
         
-        # 各ターンの倍率を直接生成
-        raw_multipliers = []
-        for i in range(self.MINOR_TURNS_PER_MAJOR):
-            base_random = random.uniform(self.RANDOM_MIN, self.RANDOM_MAX)
-            multiplier = base_random + trend_bias
+        for attempt in range(10):  # 10回試行
+            multipliers = self._generate_multipliers(self.target_multiplier)
+            cumulative_values = self._calc_cumulative(multipliers)
+            final_value = cumulative_values[-1]
+            error = abs(final_value - self.target_multiplier)
             
-            # 最初の子ターンは必ず1.0以上
-            if i == 0 and multiplier < self.FIRST_TURN_MIN:
-                multiplier = self.FIRST_TURN_MIN
-            
-            raw_multipliers.append(multiplier)
+            if error < best_error:
+                best_error = error
+                best_multipliers = multipliers
         
-        print(f"  生ランダム乗数: {[f'{x:.2f}' for x in raw_multipliers]}")
+        # 最良の結果を採用
+        self.turn_multipliers = best_multipliers
+        self.price_curve = self._calc_cumulative(best_multipliers)
         
-        # 平均を計算
-        average_multiplier = sum(raw_multipliers) / len(raw_multipliers)
-        
-        print(f"  生ランダム乗数の平均: {average_multiplier:.2f}")
-        
-        # 正規化（平均が目標倍率になるようスケーリング）
-        scale_factor = self.target_multiplier / average_multiplier
-        
-        # 各ターンの正規化倍率（これが実際の価格曲線）
-        self.turn_multipliers = [m * scale_factor for m in raw_multipliers]
-        
-        # 累積値計算（平均的な投資での成長シミュレーション用）
-        # 各ターンで同額投資した場合の平均価値成長
-        self.price_curve = []
-        cumulative_investment = 0
-        cumulative_value = 0
-        
-        for i, multiplier in enumerate(self.turn_multipliers):
-            # 各ターンで1単位投資すると仮定
-            cumulative_investment += 1
-            cumulative_value += 1 * multiplier  # 投資1 × そのターンの倍率
-            average_growth = cumulative_value / cumulative_investment
-            self.price_curve.append(average_growth)
-        
-        print(f"  スケール係数: {scale_factor:.3f}")
-        print(f"  各ターン倍率: {[f'{x:.2f}x' for x in self.turn_multipliers]}")
-        print(f"  累積値（参考）: {[f'{x:.2f}' for x in self.price_curve]}")
-        print(f"  平均成長率: {self.price_curve[-1]:.2f} (目標: {self.target_multiplier:.2f})")
-        
-        # 検証: 全ターンの平均が目標倍率になるかチェック
-        average_multiplier = sum(self.turn_multipliers) / len(self.turn_multipliers)
-        print(f"  各ターン倍率の平均: {average_multiplier:.2f}")
+        print(f"  各ターン乗数: {[f'{x:.2f}x' for x in self.turn_multipliers]}")
+        print(f"  累積値: {[f'{x:.2f}' for x in self.price_curve]}")
+        print(f"  最終到達値: {self.price_curve[-1]:.2f} (目標: {self.target_multiplier:.2f})")
+        print(f"  誤差: {best_error:.3f} (10回試行での最良値)")
         
         return self.price_curve
     
