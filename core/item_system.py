@@ -92,12 +92,11 @@ class ItemSystem:
         condition_mult = cls.CONDITIONS[condition]['multiplier']
         display_base_value = actual_value / (condition_mult * rarity_multiplier)
         
-        # 価格曲線倍率を適用した推定価格を計算
-        from .turn_system import turn_system
-        price_curve_multiplier = turn_system.get_current_price_multiplier()
-        estimated_price = round(actual_value * price_curve_multiplier, 2)
+        # フェーズ2: actual_valueは既に価格倍率適用済み
+        # estimated_priceは売却時の推定価格（base_valueの80%）
+        estimated_price = round(actual_value * 0.8, 2)
         
-        print(f"[ItemSystem] 商品価格計算: 基本価値{actual_value:.2f} × 価格曲線{price_curve_multiplier:.2f} = 推定価格{estimated_price:.2f}円")
+        print(f"[ItemSystem] 商品生成: base_value={actual_value:.2f}円（価格倍率適用済み）, estimated_price={estimated_price:.2f}円（売却用）")
         
         # 一意のIDを生成
         item_id = int(time.time() * 1000000 + random.randint(0, 999999))
@@ -220,9 +219,12 @@ class ItemSystem:
         
         for i in range(num_items - 1):
             # ±40%のバリエーションを持たせる
-            min_val = max(base_value * 0.6, 100)  # 最小100円
-            max_val = min(base_value * 1.4, remaining_total * 0.8)
+            min_val = base_value * 0.6
+            max_val = base_value * 1.4
             
+            # 残額チェック
+            if max_val > remaining_total * 0.8:
+                max_val = remaining_total * 0.8
             if max_val <= min_val:
                 max_val = min_val * 1.1
             
@@ -230,8 +232,8 @@ class ItemSystem:
             values.append(item_value)
             remaining_total -= item_value
         
-        # 最後のアイテムは残り全額（最小100円保証）
-        values.append(max(remaining_total, 100))
+        # 最後のアイテムは残り全額
+        values.append(remaining_total)
         return values
 
     @classmethod
@@ -270,9 +272,15 @@ class ItemSystem:
         # 新仕様: アイテム数を2-5個固定
         item_count = random.randint(2, 5)
         
-        # 新仕様: 目標総価値（投資額±10%）
+        # フェーズ2: 子フェーズ価格倍率適用
+        from .turn_system import turn_system
+        price_multiplier = turn_system.get_current_price_multiplier()
+        
+        # 新仕様: 目標総価値（投資額 × 価格倍率 ± 10%）
         variance = random.uniform(0.9, 1.1)
-        target_total_value = cost * variance
+        target_total_value = cost * price_multiplier * variance
+        
+        print(f"[ItemSystem] 価格計算: 投資額{cost}円 × 価格倍率{price_multiplier:.2f} × バリエーション{variance:.2f} = 目標総価値{target_total_value:.2f}円")
         
         # 価値分配
         individual_values = cls.distribute_value_across_items(target_total_value, item_count)
