@@ -231,8 +231,8 @@
                         <select class="item-select" id="item-select-{{ i }}" onchange="updatePrice({{ i }})">
                             <option value="">商品を選択してください</option>
                             {% for item in inventory %}
-                            <option value="{{ item.id }}" data-value="{{ item.base_value }}">
-                                ID:{{ item.id }} - {{ item.genre }} ({{ item.condition }}/{{ item.rarity }}) - 推定:{{ "%.0f"|format(item.base_value) }}円
+                            <option value="{{ item.id }}" data-value="{{ item.base_value }}" data-estimated-price="{{ item.estimated_price or item.base_value }}">
+                                ID:{{ item.id }} - {{ item.genre }} ({{ item.condition }}/{{ item.rarity }}) - 推定:{{ "%.0f"|format(item.estimated_price or item.base_value) }}円
                             </option>
                             {% endfor %}
                         </select>
@@ -585,21 +585,35 @@
 
         // 全部出品機能
         function autoListAll() {
+            console.log('[AutoList] 全部出品開始');
+            
             // 在庫データを取得（JavaScript側）
             const inventorySelects = document.querySelectorAll('[id^="item-select-"]');
             const availableItems = [];
             
             // 最初のselectから利用可能なアイテムを取得
             const firstSelect = inventorySelects[0];
+            console.log('[AutoList] 利用可能オプション数:', firstSelect.options.length);
+            
             for (let option of firstSelect.options) {
                 if (option.value && option.value !== '' && !option.disabled) {
+                    const estimatedPrice = getEstimatedPriceFromOption(option);
+                    console.log('[AutoList] アイテム発見:', {
+                        id: option.value,
+                        text: option.textContent,
+                        dataAttr: option.getAttribute('data-estimated-price'),
+                        estimatedPrice: estimatedPrice
+                    });
+                    
                     availableItems.push({
                         id: option.value,
                         text: option.textContent,
-                        estimatedPrice: getEstimatedPriceFromOption(option)
+                        estimatedPrice: estimatedPrice
                     });
                 }
             }
+            
+            console.log('[AutoList] 利用可能アイテム合計:', availableItems.length);
             
             // 利用可能なスロットを探して自動設定
             let itemIndex = 0;

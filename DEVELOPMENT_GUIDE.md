@@ -1,10 +1,10 @@
-# 開発計画・進行管理
+# 開発ガイド
 
-## 開発の再開時に確認すること
+## 開発再開時のチェックリスト
 
-1. 現在の開発状況（下記の進行状況を確認）
-2. 次に取り組むべき項目（開発計画セクションを確認）
-3. 開発環境のセットアップ状況（[CROSS_PLATFORM_PYTHON_SETUP.md](./CROSS_PLATFORM_PYTHON_SETUP.md)参照）
+1. **現在の状況確認**: [PROJECT_STATUS.md](./PROJECT_STATUS.md)
+2. **環境セットアップ**: [CROSS_PLATFORM_PYTHON_SETUP.md](./CROSS_PLATFORM_PYTHON_SETUP.md)
+3. **詳細仕様確認**: [GAME_SPECIFICATIONS.md](./GAME_SPECIFICATIONS.md)
 
 ## 開発の全体的な進行イメージ
 
@@ -24,29 +24,18 @@
 3. **演出・UI改善** (フェーズ6以降)
 4. **LLM連携** (フェーズ5)
 
-## 現在の開発状況
+## 開発方針
 
-**最終更新日**: 2025-06-20
+### アーキテクチャ原則
+- **3層分離設計**: core(ロジック) / api(JSON) / web(UI)
+- **UI独立性**: Flask ⇔ CLI ⇔ pyxel等への切り替えを容易に
+- **段階的実装**: 機能を小分けして品質を保つ
 
-### 完了済みフェーズ
-- ✅ **フェーズ0**: 基盤構築（Flask、HTML/CSS/JavaScript、バッチファイル）
-- ✅ **フェーズ1**: 買うモードのコスト計算と商品生成ロジック
-- ✅ **フェーズ2**: 売るモードの価格評価とオークション結果判定
-- ✅ **フェーズ3**: 収益・資金管理とループ処理
-- ✅ **フェーズ4**: 商品保持・再出品ロジック
-- ✅ **UI分離リファクタリング**: core/api/web層の完全分離（1,953行）
-
-### 進行中フェーズ
-- 🔄 **フェーズ4.5**: ゲームサイクル実証・継続性向上
-
-### 最近の作業内容
-- 仮想環境のクロスプラットフォーム対応完了
-  - WSL/Linux用: `venv`
-  - Windows用: `venv_win`
-- requirements.txt英語コメント対応
-- run.batの英語化・仮想環境名更新
-- .gitignoreにvenv_win追加
-- [README.md](./README.md)開発ガイトライン更新
+### 技術選択
+- **Backend**: Python + Flask
+- **Frontend**: HTML/CSS/JavaScript (将来pyxel等に切り替え予定)
+- **State**: メモリ上管理 (将来DB化検討)
+- **API**: JSON形式でUI層と分離
 
 ## 次の開発計画
 

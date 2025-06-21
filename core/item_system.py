@@ -91,6 +91,13 @@ class ItemSystem:
         condition_mult = cls.CONDITIONS[condition]['multiplier']
         display_base_value = actual_value / (condition_mult * rarity_multiplier)
         
+        # 価格曲線倍率を適用した推定価格を計算
+        from .turn_system import turn_system
+        price_curve_multiplier = turn_system.get_current_price_multiplier()
+        estimated_price = round(actual_value * price_curve_multiplier, 2)
+        
+        print(f"[ItemSystem] 商品価格計算: 基本価値{actual_value:.2f} × 価格曲線{price_curve_multiplier:.2f} = 推定価格{estimated_price:.2f}円")
+        
         # 一意のIDを生成
         item_id = int(time.time() * 1000000 + random.randint(0, 999999))
         
@@ -101,7 +108,8 @@ class ItemSystem:
             'condition_name': cls.CONDITIONS[condition]['name'],
             'rarity': rarity_name,
             'rarity_multiplier': rarity_multiplier,
-            'base_value': round(actual_value, 2),  # 実際の価値を使用
+            'base_value': round(actual_value, 2),  # 実際の価値（価格曲線適用前）
+            'estimated_price': estimated_price,   # 価格曲線適用後の推定価格
             'display_base_value': round(display_base_value, 2),  # 表示用
             'years': years,
             'distance': distance,
