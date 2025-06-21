@@ -1,8 +1,12 @@
 # タイムトラベル仕入れ・オークションゲーム
 
+https://deepwiki.com/tomosud/timetravel
+
 ## 概要
 
 プレイヤーが過去にタイムトラベルして商品を仕入れ、現代のオークションで売却して利益を得るWebゲームです。
+AIを使ったコーディングの学習のために開発中ですよ。
+Privateで公開する価値のないリポジトリですが、よくわかんなくなったのでDeepwikiで読んでみたいので一旦公開しています。
 
 **📋 開発状況**: [PROJECT_STATUS.md](./PROJECT_STATUS.md) | **🛠️ 開発ガイド**: [DEVELOPMENT_GUIDE.md](./DEVELOPMENT_GUIDE.md)
 
