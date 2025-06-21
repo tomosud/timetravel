@@ -21,7 +21,6 @@ def index():
 @app.route('/buy')
 def buy_mode():
     """買うモードページ（フェーズ2: UFOサイズ廃止）"""
-    from core.travel_config import YEARS_MIN, YEARS_MAX, DISTANCE_MIN, DISTANCE_MAX, DEFAULT_YEARS, DEFAULT_DISTANCE
     from core.turn_system import turn_system
     from core.asset_manager import AssetManager
     
@@ -37,13 +36,14 @@ def buy_mode():
                          target_multiplier=target_multiplier,
                          asset_info=asset_info,
                          travel_limits={
-                             'years_min': YEARS_MIN,
-                             'years_max': YEARS_MAX,
-                             'distance_min': DISTANCE_MIN,
-                             'distance_max': DISTANCE_MAX,
-                             'default_years': DEFAULT_YEARS,
-                             'default_distance': DEFAULT_DISTANCE
-                         })
+                             'years_min': GameConfig.YEARS_MIN,
+                             'years_max': GameConfig.YEARS_MAX,
+                             'distance_min': GameConfig.DISTANCE_MIN,
+                             'distance_max': GameConfig.DISTANCE_MAX,
+                             'default_years': GameConfig.DEFAULT_YEARS,
+                             'default_distance': GameConfig.DEFAULT_DISTANCE
+                         },
+                         auto_invest_options=GameConfig.AUTO_INVEST_OPTIONS)
 
 @app.route('/sell')
 def sell_mode():
@@ -55,7 +55,8 @@ def sell_mode():
     return render_template('sell.html', 
                          game_state=game_result['data'],
                          inventory=inventory_result['data']['inventory'],
-                         auction_items=auction_result['data']['auction_items'])
+                         auction_items=auction_result['data']['auction_items'],
+                         max_auction_items=GameConfig.MAX_AUCTION_ITEMS)
 
 @app.route('/api/buy', methods=['POST'])
 def api_buy():

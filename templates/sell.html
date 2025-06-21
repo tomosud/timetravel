@@ -213,7 +213,7 @@
 
 
     <div class="auction-section">
-        <h3>オークション出品設定（最大8個まで）</h3>
+        <h3>オークション出品設定（最大{{ max_auction_items }}個まで）</h3>
         <table class="auction-table">
             <thead>
                 <tr>
@@ -226,7 +226,7 @@
             </thead>
             <tbody id="auction-table-body">
                 <!-- 8行のオークション枠 -->
-                {% for i in range(8) %}
+                {% for i in range(max_auction_items) %}
                 <tr>
                     <td>
                         <select class="item-select" id="item-select-{{ i }}" onchange="updatePrice({{ i }})">
@@ -320,14 +320,14 @@
         }
 
         function findSlotForItem(itemId) {
-            for (let i = 0; i < 8; i++) {
+            for (let i = 0; i < {{ max_auction_items }}; i++) {
                 const select = document.getElementById(`item-select-${i}`);
                 if (select.value == itemId) {
                     return i;
                 }
             }
             // 空きスロットを探す
-            for (let i = 0; i < 8; i++) {
+            for (let i = 0; i < {{ max_auction_items }}; i++) {
                 const select = document.getElementById(`item-select-${i}`);
                 if (select.value === '') {
                     return i;

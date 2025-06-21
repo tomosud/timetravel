@@ -215,16 +215,9 @@
         <h3>🤖 自動投資（テスト用）</h3>
         <p>投資可能額の指定割合で自動投資します（UFO代金を引いた現金ベース）</p>
         <div class="auto-invest-buttons">
-            <button class="auto-invest-btn" onclick="autoInvest(0.1)">10%</button>
-            <button class="auto-invest-btn" onclick="autoInvest(0.2)">20%</button>
-            <button class="auto-invest-btn" onclick="autoInvest(0.3)">30%</button>
-            <button class="auto-invest-btn" onclick="autoInvest(0.4)">40%</button>
-            <button class="auto-invest-btn" onclick="autoInvest(0.5)">50%</button>
-            <button class="auto-invest-btn" onclick="autoInvest(0.6)">60%</button>
-            <button class="auto-invest-btn" onclick="autoInvest(0.7)">70%</button>
-            <button class="auto-invest-btn" onclick="autoInvest(0.8)">80%</button>
-            <button class="auto-invest-btn" onclick="autoInvest(0.9)">90%</button>
-            <button class="auto-invest-btn" onclick="autoInvest(1.0)">100%</button>
+            {% for percentage in auto_invest_options %}
+            <button class="auto-invest-btn" onclick="autoInvest({{ percentage / 100 }})">{{ percentage }}%</button>
+            {% endfor %}
         </div>
         <div id="auto-invest-result"></div>
     </div>
