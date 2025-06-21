@@ -8,6 +8,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from api.game_api import game_api
 from api.travel_api import travel_api
 from api.auction_api import auction_api
+from core.game_config import GameConfig
 
 app = Flask(__name__)
 app.secret_key = 'timetravel_game_secret_key'
@@ -190,8 +191,8 @@ def api_auto_invest():
         base_distance = int(target_investment / max(base_years, 1))
         
         # 制限内に収める
-        years = max(1, min(base_years, 1000000))
-        distance = max(1, min(base_distance, 1000000))
+        years = max(GameConfig.YEARS_MIN, min(base_years, GameConfig.YEARS_MAX))
+        distance = max(GameConfig.DISTANCE_MIN, min(base_distance, GameConfig.DISTANCE_MAX))
         
         # 実際のコストを計算
         actual_investment = years * distance

@@ -16,6 +16,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from api.game_api import game_api
 from api.travel_api import travel_api
 from api.auction_api import auction_api
+from core.game_config import GameConfig
 
 
 class GameCLI:
@@ -82,17 +83,15 @@ class GameCLI:
             print(f"{i+1:2d}. {item['genre']} ({item['condition']}) "
                   f"開始価格:{auction_item['start_price']}円")
     
-    def execute_travel(self, years=None, distance=None, ufo_size=None):
+    def execute_travel(self, years=None, distance=None):
         """タイムトラベル実行"""
         if years is None:
-            years = int(input("年数差 (1-10000000): "))
+            years = int(input(f"年数差 ({GameConfig.YEARS_MIN}-{GameConfig.YEARS_MAX}): "))
         if distance is None:
-            distance = int(input("距離 (1-20000): "))
-        if ufo_size is None:
-            ufo_size = float(input("UFOサイズ倍率 (1.0-100.0): "))
+            distance = int(input(f"距離 ({GameConfig.DISTANCE_MIN}-{GameConfig.DISTANCE_MAX}): "))
         
         # コスト計算
-        cost_result = travel_api.calculate_travel_cost(years, distance, ufo_size)
+        cost_result = travel_api.calculate_travel_cost(years, distance)
         if not cost_result['success']:
             print(f"コスト計算エラー: {cost_result.get('error', 'Unknown error')}")
             return False
@@ -112,7 +111,7 @@ class GameCLI:
             return False
         
         # タイムトラベル実行
-        result = travel_api.execute_travel(years, distance, ufo_size)
+        result = travel_api.execute_travel(years, distance)
         if not result['success']:
             print(f"タイムトラベルエラー: {result.get('error', 'Unknown error')}")
             return False
@@ -140,9 +139,9 @@ class GameCLI:
         self.show_inventory()
         
         auction_items = []
-        print("\n出品する商品を選択してください（最大8個、0で終了）:")
+        print(f"\n出品する商品を選択してください（最大{GameConfig.MAX_AUCTION_ITEMS}個、0で終了）:")
         
-        for slot in range(8):
+        for slot in range(GameConfig.MAX_AUCTION_ITEMS):
             try:
                 choice = input(f"出品スロット{slot+1} (商品番号 1-{len(inventory)}, 0で終了): ")
                 choice = int(choice)
@@ -304,10 +303,10 @@ def run_command_mode(args):
     elif args.command == 'inventory':
         cli.show_inventory()
     elif args.command == 'buy':
-        if args.years and args.distance and args.ufo_size:
-            cli.execute_travel(args.years, args.distance, args.ufo_size)
+        if args.years and args.distance:
+            cli.execute_travel(args.years, args.distance)
         else:
-            print("Error: --years, --distance, --ufo-size required for buy command")
+            print("Error: --years, --distance required for buy command")
             return False
     elif args.command == 'reset':
         result = game_api.reset_game()
@@ -325,7 +324,6 @@ def main():
     parser.add_argument('--command', '-c', help='Command to execute (for automation)')
     parser.add_argument('--years', type=int, help='Years for travel')
     parser.add_argument('--distance', type=int, help='Distance for travel')
-    parser.add_argument('--ufo-size', type=float, help='UFO size multiplier')
     parser.add_argument('--json', action='store_true', help='Output in JSON format')
     
     args = parser.parse_args()

@@ -7,6 +7,7 @@ import time
 from typing import Dict, List, Any, Tuple
 from core.ai_buyers import ai_buyer_manager
 from core.item_system import ItemSystem
+from core.game_config import GameConfig
 
 
 class AuctionSystem:
@@ -14,9 +15,9 @@ class AuctionSystem:
     
     def __init__(self):
         """オークションシステム初期化"""
-        self.auction_fee_rate = 0.1  # 手数料10%
-        self.auction_duration_rounds = 10  # 1分間を10ラウンドでシミュレート
-        self.bid_threshold = 0.3  # 入札の興味度閾値（低めに設定）
+        self.auction_fee_rate = GameConfig.AUCTION_FEE_RATE
+        self.auction_duration_rounds = GameConfig.AUCTION_DURATION_ROUNDS
+        self.bid_threshold = GameConfig.AUCTION_BID_THRESHOLD
     
     def create_auction_item(self, item: Dict[str, Any], start_price: float) -> Dict[str, Any]:
         """オークション出品アイテムを作成"""
@@ -36,8 +37,8 @@ class AuctionSystem:
         if len(auction_items) == 0:
             return False, "出品する商品がありません"
         
-        if len(auction_items) > 8:
-            return False, "同時出品は最大8個までです"
+        if len(auction_items) > GameConfig.MAX_AUCTION_ITEMS:
+            return False, f"同時出品は最大{GameConfig.MAX_AUCTION_ITEMS}個までです"
         
         for auction_item in auction_items:
             if auction_item['start_price'] <= 0:
