@@ -11,7 +11,7 @@ import subprocess
 import time
 
 # プロジェクトルートをパスに追加
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
 
 from api.game_api import game_api
 from api.travel_api import travel_api

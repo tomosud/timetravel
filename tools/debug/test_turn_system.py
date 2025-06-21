@@ -7,7 +7,7 @@ import sys
 import os
 
 # プロジェクトルートをパスに追加
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
 
 from core.turn_system import turn_system, configure_turn_system
 from api.travel_api import travel_api

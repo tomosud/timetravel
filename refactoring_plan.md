@@ -189,6 +189,28 @@
 - ✅ tools/README.md作成（ツール用途説明）
 - ✅ root README.mdにtools/案内追加
 
+### tools/移動後のパス修正作業
+- ✅ tools/tests/auto_invest_test.py sys.path修正
+- ✅ tools/tests/test_phase2_pricing.py sys.path修正
+- ✅ tools/debug/run_test.py sys.path修正
+- ✅ tools/debug/test_game.py sys.path修正
+- ✅ tools/debug/test_turn_system.py sys.path修正
+- ✅ tools/README.md 実行方法とパス修正状況更新
+
+### ドキュメント構造再編成作業
+- ✅ CURRENT_SPECIFICATIONS.md作成（現在実装仕様統合）
+- ✅ DEVELOPMENT_ENTRY.md作成（開発エントリーポイント）
+- ✅ DEVELOPMENT_HISTORY.md作成（完了フェーズ履歴）
+- ✅ README.md更新（新ドキュメント構造に対応）
+
+### 統合・削除対象ファイル確認
+- GAME_SPECIFICATIONS.md → CURRENT_SPECIFICATIONS.mdに統合済み
+- PROJECT_STATUS.md → DEVELOPMENT_ENTRY.mdに統合済み
+- PHASE1_COMPLETION_SUMMARY.md → DEVELOPMENT_HISTORY.mdに統合済み
+- PHASE2_3_COMPLETION_SUMMARY.md → DEVELOPMENT_HISTORY.mdに統合済み
+- READING_GUIDE.md → README.mdに統合済み
+- features/フォルダ → 内容統合済み（履歴として残すか削除するか要確認）
+
 ---
 
 **注意**: 作業中に矛盾や不明点があれば都度質問・決定を記録する

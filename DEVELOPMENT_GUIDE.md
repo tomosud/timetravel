@@ -1,10 +1,12 @@
 # 開発ガイド
 
+**更新条件**: 開発方針・アーキテクチャルール・コーディング規約の変更時
+
 ## 開発再開時のチェックリスト
 
-1. **現在の状況確認**: [PROJECT_STATUS.md](./PROJECT_STATUS.md)
+1. **現在の状況確認**: [DEVELOPMENT_ENTRY.md](./DEVELOPMENT_ENTRY.md)
 2. **環境セットアップ**: [CROSS_PLATFORM_PYTHON_SETUP.md](./CROSS_PLATFORM_PYTHON_SETUP.md)
-3. **詳細仕様確認**: [GAME_SPECIFICATIONS.md](./GAME_SPECIFICATIONS.md)
+3. **詳細仕様確認**: [CURRENT_SPECIFICATIONS.md](./CURRENT_SPECIFICATIONS.md)
 
 ## 開発の全体的な進行イメージ
 
@@ -37,28 +39,9 @@
 - **State**: メモリ上管理 (将来DB化検討)
 - **API**: JSON形式でUI層と分離
 
-## 次の開発計画
+## 開発計画の管理
 
-### 優先度: 高
-- **フェーズ4.5**: ゲームサイクル実証・継続性向上
-  - ゲームバランス調整とプレイ体験向上
-  - プレイヤーの継続意欲を高める要素の実装
-  - 演出なしでのゲーム性確立
-  - 長期プレイ可能性の検証
-
-### 優先度: 中
-- **フェーズ5**: LLM導入準備
-  - 商品名・説明文の自動生成システム
-  - LLM API連携の基盤実装
-
-- **フェーズ6**: UIの改善
-  - pyxelなどによるリッチなインターフェース実装
-  - ユーザビリティ向上
-
-### 優先度: 低
-- パフォーマンス最適化
-- データ永続化（ファイル/DB）
-- コードリファクタリング
+具体的な開発計画は [DEVELOPMENT_ENTRY.md](./DEVELOPMENT_ENTRY.md) を参照してください。
 
 ## 開発上の注意点
 
@@ -66,22 +49,8 @@
 - [CROSS_PLATFORM_PYTHON_SETUP.md](./CROSS_PLATFORM_PYTHON_SETUP.md)に従った環境で開発
 - WSL/Linux（venv）とWindows（venv_win）の両環境対応を維持
 
-### 仮想環境管理
-**2つの仮想環境を使い分け:**
-
-- **venv** (WSL/Linux環境用)
-  - WSL上のClaude Codeが使用
-  - 存在しない場合は自動作成: `python3 -m venv venv`
-  - 新しいパッケージが必要な場合：
-    1. `source venv/bin/activate`
-    2. `pip install [パッケージ名]`
-    3. [requirements.txt](./requirements.txt)に手動で記述追加（英語コメントのみ）
-    4. Windows環境で[run.bat](./run.bat)実行テスト
-
-- **venv_win** (Windows環境用)
-  - Windows環境で`run.bat`実行時に使用
-  - [requirements.txt](./requirements.txt)を参照して自動インストール
-  - 直接パッケージ追加は行わず、[requirements.txt](./requirements.txt)の内容に従う
+### 環境管理
+詳細な環境セットアップ手順は [CROSS_PLATFORM_PYTHON_SETUP.md](./CROSS_PLATFORM_PYTHON_SETUP.md) を参照してください。
 
 ### コーディング規約
 - **ファイル分割**: 1ファイル約400行以内で機能分割
@@ -102,15 +71,7 @@
 
 ## 開発履歴
 
-### 2025-06-20
-- クロスプラットフォーム対応セットアップ完了
-- 開発環境ドキュメント整備
-- [developmentPlan.md](./developmentPlan.md)作成
-
-### それ以前
-- フェーズ0～4の基本ゲーム機能実装完了
-- Flask Webアプリケーション完成
-- AIオークションシステム実装
+開発履歴詳細は [DEVELOPMENT_HISTORY.md](./DEVELOPMENT_HISTORY.md) を参照してください。
 
 ## 参考ドキュメント
 

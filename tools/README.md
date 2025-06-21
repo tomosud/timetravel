@@ -37,8 +37,15 @@ source venv/bin/activate  # Linux/WSL
 # または
 venv_win\Scripts\activate.bat  # Windows
 
+# プロジェクトルートから実行（推奨）
 python tools/tests/test_price_logic.py
+python tools/tests/auto_invest_test.py
 python tools/debug/run_test.py
+
+# または tools/フォルダから実行
+cd tools
+python tests/auto_invest_test.py
+python debug/run_test.py
 ```
 
 ### 分析ツール
@@ -50,7 +57,7 @@ python tools/analysis/buy_visualizer.py
 
 - **本番環境から分離**: これらのツールは本番ゲームとは独立しています
 - **仮想環境必須**: 実行時は必ず仮想環境をアクティベートしてください
-- **パス調整**: tools/移動後のインポートパス調整が必要な場合があります
+- **パス修正済み**: tools/移動後のインポートパスは修正済みです
 
 ---
 

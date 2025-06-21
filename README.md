@@ -1,5 +1,7 @@
 # タイムトラベル仕入れ・オークションゲーム
 
+**更新条件**: ゲームの概要・クイックスタート方法・基本ゲームフローの変更時
+
 https://deepwiki.com/tomosud/timetravel
 
 ## 概要
@@ -8,7 +10,7 @@ https://deepwiki.com/tomosud/timetravel
 AIを使ったコーディングの学習のために開発中ですよ。
 Privateで公開する価値のないリポジトリですが、よくわかんなくなったのでDeepwikiで読んでみたいので一旦公開しています。
 
-**📋 開発状況**: [PROJECT_STATUS.md](./PROJECT_STATUS.md) | **🛠️ 開発ガイド**: [DEVELOPMENT_GUIDE.md](./DEVELOPMENT_GUIDE.md)
+**📋 開発状況**: [DEVELOPMENT_ENTRY.md](./DEVELOPMENT_ENTRY.md) | **🛠️ 開発ガイド**: [DEVELOPMENT_GUIDE.md](./DEVELOPMENT_GUIDE.md)
 
 ## クイックスタート
 
@@ -25,48 +27,12 @@ run.bat
 
 ## セットアップ・実行方法
 
-### 1. 簡単実行（推奨）
-
+### クイック実行
 ```cmd
 run.bat
 ```
 
-この単一コマンドで以下が自動実行されます：
-- 仮想環境の作成（初回のみ）
-- 必要パッケージのインストール
-- ゲームサーバーの起動
-
-### 2. 手動セットアップ
-
-**Windows環境:**
-```cmd
-# 仮想環境作成
-python -m venv venv_win
-
-# 仮想環境アクティベート
-venv_win\Scripts\activate.bat
-
-# 依存関係インストール
-pip install -r ./requirements.txt
-
-# ゲーム実行
-python ./entry.py
-```
-
-**WSL/Linux環境:**
-```bash
-# 仮想環境作成
-python3 -m venv venv
-
-# 仮想環境アクティベート
-source venv/bin/activate
-
-# 依存関係インストール
-pip install -r ./requirements.txt
-
-# ゲーム実行
-python ./entry.py
-```
+詳細なセットアップ手順: [CROSS_PLATFORM_PYTHON_SETUP.md](./CROSS_PLATFORM_PYTHON_SETUP.md)
 
 ## 使用方法
 
@@ -95,33 +61,25 @@ python ./entry.py
 ## 技術仕様
 
 ### アーキテクチャ
-```
-timetravel/
-├── core/           # ゲームロジック層
-├── api/            # JSON API層
-├── web/            # Flask UI層
-└── features/       # 機能別詳細仕様
-```
+3層分離設計（core/api/templates）による将来のUI切り替え対応
 
-### 主要システム
-- **3層分離設計**: ロジック・API・UI完全分離
-- **価格倍率曲線**: 1～10倍の可変目標倍率による戦略的成長
-- **動的AIオークション**: 毎回15人の新規バイヤー生成
-- **商品システム**: 10ジャンル×3状態×動的レア度
-
-**詳細仕様**: [GAME_SPECIFICATIONS.md](./GAME_SPECIFICATIONS.md)
+**詳細仕様**: [CURRENT_SPECIFICATIONS.md](./CURRENT_SPECIFICATIONS.md)
 
 ## ドキュメント構成
 
-### 📖 読む順序
-1. **README.md** (このファイル) - プロジェクト概要
-2. **[PROJECT_STATUS.md](./PROJECT_STATUS.md)** - 現在の開発状況
-3. **[DEVELOPMENT_GUIDE.md](./DEVELOPMENT_GUIDE.md)** - 開発方針・環境構築
-4. **[GAME_SPECIFICATIONS.md](./GAME_SPECIFICATIONS.md)** - 詳細仕様
-5. **[features/](./features/)** - 機能別設計書
+### 📖 プレイヤー・初回利用者向け
+1. **README.md** (このファイル) - プロジェクト概要・クイックスタート
 
-### 🔧 開発者向け
-- 環境構築: [CROSS_PLATFORM_PYTHON_SETUP.md](./CROSS_PLATFORM_PYTHON_SETUP.md)
-- 開発ツール: [tools/](./tools/) - テスト・デバッグ・分析ツール
+### 📖 開発者向け - 読む順序
+1. **[DEVELOPMENT_ENTRY.md](./DEVELOPMENT_ENTRY.md)** - 開発の入り口・現在状況
+2. **[DEVELOPMENT_GUIDE.md](./DEVELOPMENT_GUIDE.md)** - 開発方針・ルール・環境構築
+3. **[CURRENT_SPECIFICATIONS.md](./CURRENT_SPECIFICATIONS.md)** - 現在の実装仕様詳細
+
+### 📖 参考資料
+- **[DEVELOPMENT_HISTORY.md](./DEVELOPMENT_HISTORY.md)** - 完了フェーズの開発履歴
+- **[CROSS_PLATFORM_PYTHON_SETUP.md](./CROSS_PLATFORM_PYTHON_SETUP.md)** - 環境構築詳細
+
+### 🔧 開発ツール
+- **[tools/](./tools/)** - テスト・デバッグ・分析ツール
 
 ---
