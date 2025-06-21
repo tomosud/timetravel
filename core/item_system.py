@@ -7,6 +7,7 @@ import random
 import time
 from typing import Dict, List, Any, Tuple
 from .turn_system import turn_system
+from .travel_config import YEARS_MIN, YEARS_MAX, DISTANCE_MIN, DISTANCE_MAX, UFO_SIZE_MIN, UFO_SIZE_MAX
 
 
 class ItemSystem:
@@ -192,14 +193,14 @@ class ItemSystem:
     @classmethod
     def validate_travel_parameters(cls, years: int, distance: int, ufo_size: float) -> Tuple[bool, str]:
         """タイムトラベルパラメータの妥当性をチェック"""
-        if years < 1 or years > 1000000:
-            return False, "年数は1〜1000000年の範囲で指定してください"
+        if years < YEARS_MIN or years > YEARS_MAX:
+            return False, f"年数は{YEARS_MIN}〜{YEARS_MAX}年の範囲で指定してください"
         
-        if distance < 0 or distance > 50000:
-            return False, "距離は0〜50000kmの範囲で指定してください"
+        if distance < DISTANCE_MIN or distance > DISTANCE_MAX:
+            return False, f"距離は{DISTANCE_MIN}〜{DISTANCE_MAX}kmの範囲で指定してください"
         
-        if ufo_size < 1.0 or ufo_size > 10.0:
-            return False, "UFOサイズは1.0〜10.0倍の範囲で指定してください"
+        if ufo_size < UFO_SIZE_MIN or ufo_size > UFO_SIZE_MAX:
+            return False, f"UFOサイズは{UFO_SIZE_MIN}〜{UFO_SIZE_MAX}倍の範囲で指定してください"
         
         return True, ""
     

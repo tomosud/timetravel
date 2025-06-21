@@ -20,8 +20,21 @@ def index():
 @app.route('/buy')
 def buy_mode():
     """買うモードページ"""
+    from core.travel_config import YEARS_MIN, YEARS_MAX, DISTANCE_MIN, DISTANCE_MAX, UFO_SIZE_MIN, UFO_SIZE_MAX, DEFAULT_YEARS, DEFAULT_DISTANCE, DEFAULT_UFO_SIZE
     result = game_api.get_game_state()
-    return render_template('buy.html', game_state=result['data'])
+    return render_template('buy.html', 
+                         game_state=result['data'],
+                         travel_limits={
+                             'years_min': YEARS_MIN,
+                             'years_max': YEARS_MAX,
+                             'distance_min': DISTANCE_MIN,
+                             'distance_max': DISTANCE_MAX,
+                             'ufo_size_min': UFO_SIZE_MIN,
+                             'ufo_size_max': UFO_SIZE_MAX,
+                             'default_years': DEFAULT_YEARS,
+                             'default_distance': DEFAULT_DISTANCE,
+                             'default_ufo_size': DEFAULT_UFO_SIZE
+                         })
 
 @app.route('/sell')
 def sell_mode():
