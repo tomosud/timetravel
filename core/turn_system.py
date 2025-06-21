@@ -6,6 +6,7 @@
 import random
 from typing import List, Dict, Any
 import time
+from .asset_manager import AssetManager
 
 
 class TurnSystem:
@@ -13,7 +14,7 @@ class TurnSystem:
     
     # 設定可能な変数
     MINOR_TURNS_PER_MAJOR = 8      # 大ターンあたりの子ターン数
-    TARGET_GROWTH_MULTIPLIER = 10.0  # 大ターン終了時の目標倍率
+    # TARGET_GROWTH_MULTIPLIER = 10.0  # フェーズ2で可変化のため廃止
     RANDOM_MIN = 0.5               # 乱数の最小値
     RANDOM_MAX = 1.8               # 乱数の最大値
     FIRST_TURN_MIN = 1.0           # 最初の子ターンの最小倍率
@@ -25,16 +26,18 @@ class TurnSystem:
         self.major_turn = 1
         self.minor_turn = 1
         self.price_curve = []
+        self.target_multiplier = AssetManager.generate_target_multiplier()  # フェーズ2: 目標倍率
         self.generate_new_price_curve()
         
         print(f"[TurnSystem] 初期化完了")
-        print(f"  設定: 子ターン数={self.MINOR_TURNS_PER_MAJOR}, 目標倍率={self.TARGET_GROWTH_MULTIPLIER}")
+        print(f"  設定: 子ターン数={self.MINOR_TURNS_PER_MAJOR}, 目標倍率={self.target_multiplier:.2f}倍")
         print(f"  乱数範囲: {self.RANDOM_MIN}～{self.RANDOM_MAX}")
         self._debug_current_state()
     
     def generate_new_price_curve(self) -> List[float]:
-        """新しい価格倍率曲線を生成"""
+        """新しい価格倍率曲線を生成（フェーズ2: 可変目標倍率対応）"""
         print(f"\n[TurnSystem] 大ターン{self.major_turn} - 新しい価格曲線を生成中...")
+        print(f"  目標倍率: {self.target_multiplier:.2f}倍")
         
         # トレンド要素の決定
         trend_bias = 0.0
@@ -72,7 +75,7 @@ class TurnSystem:
         
         # 正規化（最終値を目標倍率に調整）
         final_value = cumulative_values[-1]
-        scale_factor = self.TARGET_GROWTH_MULTIPLIER / final_value
+        scale_factor = self.target_multiplier / final_value  # フェーズ2: 可変目標倍率使用
         
         self.price_curve = [value * scale_factor for value in cumulative_values]
         
@@ -81,6 +84,10 @@ class TurnSystem:
         print(f"  変化率: {[f'{(self.price_curve[i]/self.price_curve[i-1]-1)*100:+.1f}%' if i > 0 else '+0.0%' for i in range(len(self.price_curve))]}")
         
         return self.price_curve
+    
+    def get_target_multiplier(self) -> float:
+        """現在の目標倍率を取得（フェーズ2）"""
+        return self.target_multiplier
     
     def get_current_price_multiplier(self) -> float:
         """現在の子ターンの価格倍率を取得"""
@@ -100,6 +107,8 @@ class TurnSystem:
             # 大ターン終了、新しい大ターン開始
             self.major_turn += 1
             self.minor_turn = 1
+            # フェーズ2: 新しい目標倍率を生成
+            self.target_multiplier = AssetManager.generate_target_multiplier()
             self.generate_new_price_curve()
             
             print(f"[TurnSystem] 🎉 大ターン{self.major_turn - 1}完了！新しい大ターン{self.major_turn}開始")
@@ -118,6 +127,7 @@ class TurnSystem:
             'minor_turn': self.minor_turn,
             'minor_turns_total': self.MINOR_TURNS_PER_MAJOR,
             'current_multiplier': self.get_current_price_multiplier(),
+            'target_multiplier': self.target_multiplier,  # フェーズ2: 目標倍率追加
             'price_curve': self.price_curve.copy(),
             'progress_ratio': self.minor_turn / self.MINOR_TURNS_PER_MAJOR,
             'is_major_turn_complete': self.minor_turn >= self.MINOR_TURNS_PER_MAJOR
@@ -129,6 +139,8 @@ class TurnSystem:
         self.major_turn = 1
         self.minor_turn = 1
         self.price_curve = []
+        # フェーズ2: 新しい目標倍率を生成
+        self.target_multiplier = AssetManager.generate_target_multiplier()
         self.generate_new_price_curve()
         self._debug_current_state()
     
@@ -137,6 +149,7 @@ class TurnSystem:
         print(f"[TurnSystem] 現在状態:")
         print(f"  大ターン: {self.major_turn}")
         print(f"  子ターン: {self.minor_turn}/{self.MINOR_TURNS_PER_MAJOR}")
+        print(f"  目標倍率: {self.target_multiplier:.2f}倍")
         print(f"  現在倍率: {self.get_current_price_multiplier():.2f}x")
         
         # 価格曲線の進行状況表示

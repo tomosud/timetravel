@@ -6,37 +6,54 @@
 from typing import Dict, Any
 from core.game_engine import game_engine
 from core.item_system import item_system
+from core.asset_manager import AssetManager
+import random
 
 
 class TravelAPI:
     """タイムトラベルAPI"""
     
     @staticmethod
-    def calculate_travel_cost(years: int, distance: int, ufo_size: float) -> Dict[str, Any]:
-        """タイムトラベルコストを計算"""
+    def calculate_travel_cost(years: int, distance: int) -> Dict[str, Any]:
+        """タイムトラベルコストを計算（フェーズ2: UFOサイズ廃止）"""
         try:
             # パラメータ検証
-            valid, error_message = item_system.validate_travel_parameters(years, distance, ufo_size)
+            valid, error_message = item_system.validate_travel_parameters(years, distance)
             if not valid:
                 return {
                     'success': False,
                     'error': error_message
                 }
             
-            cost = item_system.calculate_travel_cost(years, distance, ufo_size)
-            current_money = game_engine.get_state()['money']
+            # 投資コスト計算
+            investment_cost = item_system.calculate_travel_cost(years, distance)
+            
+            # 現在のゲーム状態取得
+            current_state = game_engine.get_state()
+            current_money = current_state['money']
+            current_inventory = current_state['inventory']
+            
+            # 資産・固定費計算
+            assets = AssetManager.calculate_assets(current_money, current_inventory)
+            fixed_cost = AssetManager.calculate_fixed_cost(assets)
+            
+            # 購入可能性判定
+            can_afford, afford_message = AssetManager.can_afford_purchase(assets, fixed_cost, investment_cost)
             
             return {
                 'success': True,
                 'data': {
-                    'cost': cost,
+                    'investment_cost': investment_cost,
+                    'fixed_cost': fixed_cost,
+                    'total_cost': investment_cost + fixed_cost,
                     'parameters': {
                         'years': years,
-                        'distance': distance,
-                        'ufo_size': ufo_size
+                        'distance': distance
                     },
+                    'assets': assets,
                     'current_money': current_money,
-                    'affordable': cost <= current_money,
+                    'affordable': can_afford,
+                    'afford_message': afford_message,
                     'estimated_items': random.randint(2, 5),  # 新仕様: 2-5個固定
                     'rarity_multiplier': item_system.calculate_rarity_multiplier(years, distance)
                 }
@@ -48,16 +65,16 @@ class TravelAPI:
             }
     
     @staticmethod
-    def preview_travel(years: int, distance: int, ufo_size: float) -> Dict[str, Any]:
-        """タイムトラベルの事前プレビュー"""
+    def preview_travel(years: int, distance: int) -> Dict[str, Any]:
+        """タイムトラベルの事前プレビュー（フェーズ2: UFOサイズ廃止）"""
         try:
             # コスト計算
-            cost_result = TravelAPI.calculate_travel_cost(years, distance, ufo_size)
+            cost_result = TravelAPI.calculate_travel_cost(years, distance)
             if not cost_result['success']:
                 return cost_result
             
             # 新仕様: 期待値計算
-            investment_cost = cost_result['data']['cost']
+            investment_cost = cost_result['data']['investment_cost']
             estimated_items = random.randint(2, 5)  # 2-5個固定
             
             # 新仕様: 投資額±10%の期待値
@@ -75,18 +92,18 @@ class TravelAPI:
                         'max_total_value': round(expected_max_total, 2),
                         'avg_total_value': round(expected_avg_total, 2),
                         'estimated_profit_range': {
-                            'min': round(expected_min_total - cost_result['data']['cost'], 2),
-                            'max': round(expected_max_total - cost_result['data']['cost'], 2),
-                            'avg': round(expected_avg_total - cost_result['data']['cost'], 2)
+                            'min': round(expected_min_total - investment_cost, 2),
+                            'max': round(expected_max_total - investment_cost, 2),
+                            'avg': round(expected_avg_total - investment_cost, 2)
                         }
                     },
                     'risk_assessment': {
                         'failure_rate': 0.1,  # 10%失敗率
-                        'high_risk': cost_result['data']['cost'] > game_engine.get_state()['money'] * 0.8,
+                        'high_risk': cost_result['data']['total_cost'] > cost_result['data']['assets'] * 0.8,
                         'recommendation': TravelAPI._get_travel_recommendation(
-                            cost_result['data']['cost'], 
+                            cost_result['data']['total_cost'], 
                             expected_avg_total, 
-                            game_engine.get_state()['money']
+                            cost_result['data']['assets']
                         )
                     }
                 }
@@ -98,40 +115,61 @@ class TravelAPI:
             }
     
     @staticmethod
-    def execute_travel(years: int, distance: int, ufo_size: float) -> Dict[str, Any]:
-        """タイムトラベルを実行"""
+    def execute_travel(years: int, distance: int) -> Dict[str, Any]:
+        """タイムトラベルを実行（フェーズ2: UFOサイズ廃止・固定費統合）"""
         try:
             current_state = game_engine.get_state()
+            current_money = current_state['money']
+            current_inventory = current_state['inventory']
+            
+            # 事前チェック: 資産・固定費・購入可能性
+            assets = AssetManager.calculate_assets(current_money, current_inventory)
+            fixed_cost = AssetManager.calculate_fixed_cost(assets)
+            investment_cost = item_system.calculate_travel_cost(years, distance)
+            
+            can_afford, afford_message = AssetManager.can_afford_purchase(assets, fixed_cost, investment_cost)
+            if not can_afford:
+                return {
+                    'success': False,
+                    'error': afford_message
+                }
             
             # タイムトラベル結果を取得
-            travel_result = item_system.get_travel_result(
-                years, distance, ufo_size, current_state['money']
-            )
+            travel_result = item_system.get_travel_result(years, distance, current_money)
             
             if not travel_result['success']:
                 return travel_result
             
-            # お金を消費（ターン進行含む）
-            cost = travel_result['cost']
-            if not game_engine.spend_money(cost):
+            # フェーズ2: 固定費徴収
+            total_cost = investment_cost + fixed_cost
+            if not game_engine.spend_money(total_cost):
                 return {
                     'success': False,
-                    'error': '資金が不足しています'
+                    'error': '資金が不足しています（固定費含む）'
                 }
             
-            print(f"[TravelAPI] 資金消費・ターン進行完了: {cost}円")
+            print(f"[TravelAPI] 資金消費完了: 投資{investment_cost}円 + UFO代金{fixed_cost}円 = 合計{total_cost}円")
             
             # 失敗時の処理
             if travel_result['failed']:
+                # ゲームオーバー判定
+                new_state = game_engine.get_state()
+                new_assets = AssetManager.calculate_assets(new_state['money'], new_state['inventory'])
+                new_fixed_cost = AssetManager.calculate_fixed_cost(new_assets)
+                is_game_over = AssetManager.check_game_over(new_assets, new_fixed_cost)
+                
                 return {
                     'success': True,
                     'failed': True,
                     'data': {
-                        'cost': cost,
+                        'investment_cost': investment_cost,
+                        'fixed_cost': fixed_cost,
+                        'total_cost': total_cost,
                         'items': [],
                         'message': travel_result['message'],
-                        'new_money': game_engine.get_state()['money'],
-                        'game_over': game_engine.check_game_over()
+                        'new_money': new_state['money'],
+                        'new_assets': new_assets,
+                        'game_over': is_game_over
                     }
                 }
             
@@ -145,22 +183,30 @@ class TravelAPI:
                 for item in items
             ]
             
+            # 最終状態とゲームオーバー判定
+            final_state = game_engine.get_state()
+            final_assets = AssetManager.calculate_assets(final_state['money'], final_state['inventory'])
+            final_fixed_cost = AssetManager.calculate_fixed_cost(final_assets)
+            is_game_over = AssetManager.check_game_over(final_assets, final_fixed_cost)
+            
             return {
                 'success': True,
                 'failed': False,
                 'data': {
-                    'cost': cost,
+                    'investment_cost': investment_cost,
+                    'fixed_cost': fixed_cost,
+                    'total_cost': total_cost,
                     'items': display_items,
                     'item_count': len(items),
                     'total_value': travel_result['total_value'],
                     'message': travel_result['message'],
-                    'new_money': game_engine.get_state()['money'],
-                    'new_inventory_count': len(game_engine.get_state()['inventory']),
-                    'game_over': game_engine.check_game_over(),
+                    'new_money': final_state['money'],
+                    'new_assets': final_assets,
+                    'new_inventory_count': len(final_state['inventory']),
+                    'game_over': is_game_over,
                     'travel_info': {
                         'years': years,
                         'distance': distance,
-                        'ufo_size': ufo_size,
                         'rarity_multiplier': item_system.calculate_rarity_multiplier(years, distance)
                     }
                 }
@@ -192,40 +238,57 @@ class TravelAPI:
             
             recommendations = []
             
+            # 現在の資産状況取得
+            current_state = game_engine.get_state()
+            assets = AssetManager.calculate_assets(current_money, current_state['inventory'])
+            
             # 低コスト・安全志向
-            safe_params = {'years': 10, 'distance': 100, 'ufo_size': 1.0}
+            safe_params = {'years': 10, 'distance': 100}
             safe_cost = item_system.calculate_travel_cost(**safe_params)
-            if safe_cost <= current_money:
+            safe_fixed_cost = AssetManager.calculate_fixed_cost(assets)
+            safe_total = safe_cost + safe_fixed_cost
+            
+            if safe_total <= assets:
                 recommendations.append({
                     'type': '安全志向',
                     'description': '低コスト・低リスクでの商品取得',
                     'parameters': safe_params,
-                    'cost': safe_cost,
+                    'investment_cost': safe_cost,
+                    'fixed_cost': safe_fixed_cost,
+                    'total_cost': safe_total,
                     'risk_level': 'Low'
                 })
             
             # バランス型
-            balanced_params = {'years': 30, 'distance': 500, 'ufo_size': 2.0}
+            balanced_params = {'years': 30, 'distance': 500}
             balanced_cost = item_system.calculate_travel_cost(**balanced_params)
-            if balanced_cost <= current_money:
+            balanced_total = balanced_cost + safe_fixed_cost  # 固定費は同じ
+            
+            if balanced_total <= assets:
                 recommendations.append({
                     'type': 'バランス型',
                     'description': '適度なコストでより良い商品を狙う',
                     'parameters': balanced_params,
-                    'cost': balanced_cost,
+                    'investment_cost': balanced_cost,
+                    'fixed_cost': safe_fixed_cost,
+                    'total_cost': balanced_total,
                     'risk_level': 'Medium'
                 })
             
             # 高リスク・高リターン
-            if current_money >= 1000:
-                risky_params = {'years': 100, 'distance': 2000, 'ufo_size': 5.0}
+            if assets >= 1000:
+                risky_params = {'years': 100, 'distance': 2000}
                 risky_cost = item_system.calculate_travel_cost(**risky_params)
-                if risky_cost <= current_money * 0.8:  # 資金の80%以下
+                risky_total = risky_cost + safe_fixed_cost
+                
+                if risky_total <= assets * 0.8:  # 資産の80%以下
                     recommendations.append({
                         'type': '高リスク・高リターン',
                         'description': '高コストだが希少な商品が期待できる',
                         'parameters': risky_params,
-                        'cost': risky_cost,
+                        'investment_cost': risky_cost,
+                        'fixed_cost': safe_fixed_cost,
+                        'total_cost': risky_total,
                         'risk_level': 'High'
                     })
             
@@ -233,7 +296,9 @@ class TravelAPI:
                 'success': True,
                 'data': {
                     'recommendations': recommendations,
-                    'current_money': current_money
+                    'current_money': current_money,
+                    'current_assets': assets,
+                    'fixed_cost_rate': AssetManager.calculate_fixed_cost(assets) / assets if assets > 0 else 0
                 }
             }
         
@@ -244,15 +309,15 @@ class TravelAPI:
             }
     
     @staticmethod
-    def _get_travel_recommendation(cost: float, expected_value: float, current_money: float) -> str:
-        """タイムトラベルの推奨度を判定"""
-        if cost > current_money:
-            return "資金不足"
-        elif cost > current_money * 0.9:
-            return "危険: 資金のほとんどを消費"
-        elif expected_value < cost:
+    def _get_travel_recommendation(total_cost: float, expected_value: float, assets: float) -> str:
+        """タイムトラベルの推奨度を判定（フェーズ2: 資産ベース）"""
+        if total_cost > assets:
+            return "資産不足"
+        elif total_cost > assets * 0.9:
+            return "危険: 資産のほとんどを消費"
+        elif expected_value < total_cost:
             return "非推奨: 損失の可能性が高い"
-        elif expected_value > cost * 1.5:
+        elif expected_value > total_cost * 1.5:
             return "推奨: 良好な利益が期待できる"
         else:
             return "普通: 適度な利益が期待できる"

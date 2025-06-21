@@ -7,6 +7,7 @@ import json
 from typing import Dict, List, Any, Optional
 import time
 from .turn_system import turn_system
+from .asset_manager import AssetManager
 
 
 class GameEngine:
@@ -39,12 +40,16 @@ class GameEngine:
         # ターン情報を取得
         turn_info = turn_system.get_turn_info()
         
+        # フェーズ2: 資産情報を追加
+        asset_info = AssetManager.get_asset_info(self.state['money'], self.state['inventory'])
+        
         return {
             'money': self.state['money'],
             'inventory': self.state['inventory'].copy(),
             'auction_items': self.state['auction_items'].copy(),
             'game_over': self.state['game_over'],
             'turn_info': turn_info,
+            'asset_info': asset_info,  # フェーズ2: 資産情報追加
             'statistics': {
                 'turn_count': self.state['turn_count'],
                 'total_profit': self.state['total_profit'],
@@ -55,8 +60,11 @@ class GameEngine:
         }
     
     def check_game_over(self) -> bool:
-        """ゲームオーバー判定：所持金0円かつ在庫なし"""
-        return self.state['money'] <= 0 and len(self.state['inventory']) == 0
+        """ゲームオーバー判定（フェーズ2: 資産・固定費ベース）"""
+        # フェーズ2: AssetManagerを使用したゲームオーバー判定
+        assets = AssetManager.calculate_assets(self.state['money'], self.state['inventory'])
+        fixed_cost = AssetManager.calculate_fixed_cost(assets)
+        return AssetManager.check_game_over(assets, fixed_cost)
     
     def spend_money(self, amount: float) -> bool:
         """お金を消費してターンを進める（成功時True、残高不足時False）"""
@@ -189,11 +197,11 @@ class GameEngine:
             return False
     
     def get_summary(self) -> Dict[str, Any]:
-        """ゲーム状態のサマリーを取得"""
+        """ゲーム状態のサマリーを取得（フェーズ2: AssetManager統合）"""
         state = self.get_state()
         
-        # 在庫の価値計算
-        inventory_value = sum(item.get('base_value', 0) for item in state['inventory'])
+        # フェーズ2: AssetManagerを使用した詳細資産情報
+        asset_info = AssetManager.get_asset_info(state['money'], state['inventory'])
         
         # オークション中の価値計算
         auction_value = sum(
@@ -204,10 +212,12 @@ class GameEngine:
         return {
             'current_money': state['money'],
             'inventory_count': len(state['inventory']),
-            'inventory_value': round(inventory_value, 2),
+            'inventory_value': asset_info['inventory_value'],
             'auction_count': len(state['auction_items']),
             'auction_value': round(auction_value, 2),
-            'total_assets': round(state['money'] + inventory_value + auction_value, 2),
+            'total_assets': asset_info['assets'],
+            'fixed_cost': asset_info['fixed_cost'],
+            'can_continue': asset_info['can_continue'],
             'game_over': state['game_over'],
             'turn_count': state['statistics']['turn_count'],
             'total_profit': state['statistics']['total_profit'],

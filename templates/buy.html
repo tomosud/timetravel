@@ -162,6 +162,20 @@
         <div><strong>子ターン:</strong> {{ game_state.turn_info.minor_turn }}/{{ game_state.turn_info.minor_turns_total }}</div>
         <div><strong>価格倍率:</strong> {{ "%.2f"|format(game_state.turn_info.current_multiplier) }}x</div>
     </div>
+    
+    <!-- フェーズ2: 市場情報 -->
+    <div class="game-stats" style="background-color: #e8f5e8; border-left: 4px solid #27ae60;">
+        <div><strong>📊 目標倍率:</strong> {{ "%.2f"|format(target_multiplier) }}倍</div>
+        <div><strong>💰 総資産:</strong> {{ "%.0f"|format(asset_info.assets) }}円</div>
+        <div><strong>🛸 UFO代金:</strong> {{ "%.0f"|format(asset_info.fixed_cost) }}円 ({{ "%.1f"|format(asset_info.fixed_cost_rate*100) }}%)</div>
+        <div><strong>⚠️ 状況:</strong> 
+            {% if asset_info.is_game_over %}
+                <span style="color: red;">ゲームオーバー</span>
+            {% else %}
+                <span style="color: green;">継続可能</span>
+            {% endif %}
+        </div>
+    </div>
 
     <div class="buy-form">
         <h3>タイムトラベル設定</h3>
@@ -178,14 +192,11 @@
                 <small>年数との乗算でコスト計算</small>
             </div>
 
-            <div class="form-group">
-                <label for="ufo-size">UFOサイズ倍率:</label>
-                <input type="number" id="ufo-size" name="ufo_size" min="{{ travel_limits.ufo_size_min }}" max="{{ travel_limits.ufo_size_max }}" step="0.1" value="{{ travel_limits.default_ufo_size }}" required>
-                <small>1.0～10.0倍（サイズが大きいほど多くの商品を取得、最大8個まで）</small>
-            </div>
 
             <div class="cost-display">
-                総費用: <span id="total-cost">111</span>円
+                <div><strong>投資額:</strong> <span id="investment-cost">111</span>円</div>
+                <div><strong>UFO代金:</strong> <span id="fixed-cost">{{ "%.0f"|format(asset_info.fixed_cost) }}</span>円</div>
+                <div style="font-size: 20px; color: #e74c3c;"><strong>総費用:</strong> <span id="total-cost">111</span>円</div>
             </div>
 
             <button type="submit" class="buy-button" id="buy-btn">
@@ -197,21 +208,25 @@
     <div id="result-area"></div>
 
     <script>
-        // コスト計算
+        // コスト計算（フェーズ2: UFOサイズ廃止・固定費統合）
         function updateCost() {
             const years = parseFloat(document.getElementById('years').value) || 0;
             const distance = parseFloat(document.getElementById('distance').value) || 0;
-            const ufoSize = parseFloat(document.getElementById('ufo-size').value) || 1.0;
             
-            const totalCost = (years * distance) * ufoSize;
+            const investmentCost = years * distance;
+            const fixedCost = parseFloat(document.getElementById('fixed-cost').textContent) || 0;
+            const totalCost = investmentCost + fixedCost;
+            
+            document.getElementById('investment-cost').textContent = Math.round(investmentCost);
             document.getElementById('total-cost').textContent = Math.round(totalCost);
             
             const currentMoney = parseFloat(document.getElementById('current-money').textContent);
             const buyBtn = document.getElementById('buy-btn');
             
+            // フェーズ2: 資産チェック（現在は簡易的に所持金のみ）
             if (totalCost > currentMoney) {
                 buyBtn.disabled = true;
-                buyBtn.textContent = '💸 お金が足りません';
+                buyBtn.textContent = '💸 資金が足りません';
             } else {
                 buyBtn.disabled = false;
                 buyBtn.textContent = '🛸 タイムトラベル実行！';
@@ -221,7 +236,6 @@
         // 入力値が変更されたときにコストを更新
         document.getElementById('years').addEventListener('input', updateCost);
         document.getElementById('distance').addEventListener('input', updateCost);
-        document.getElementById('ufo-size').addEventListener('input', updateCost);
 
         // フォーム送信処理
         document.getElementById('buy-form').addEventListener('submit', function(e) {
@@ -229,8 +243,7 @@
             
             const formData = {
                 years: parseInt(document.getElementById('years').value),
-                distance: parseInt(document.getElementById('distance').value),
-                ufo_size: parseFloat(document.getElementById('ufo-size').value)
+                distance: parseInt(document.getElementById('distance').value)
             };
             
             const buyBtn = document.getElementById('buy-btn');
@@ -255,7 +268,9 @@
                         </div>
                     `;
                 } else if (data.failed || (data.data && data.data.failed)) {
-                    const cost = data.data ? data.data.cost : data.cost;
+                    const totalCost = data.data ? data.data.total_cost : data.total_cost;
+                    const investmentCost = data.data ? data.data.investment_cost : data.investment_cost;
+                    const fixedCost = data.data ? data.data.fixed_cost : data.fixed_cost;
                     const newMoney = data.data ? data.data.new_money : data.new_money;
                     const gameOver = data.data ? data.data.game_over : data.game_over;
                     
@@ -265,7 +280,9 @@
                         </div>
                         <div class="result">
                             <h3>失敗結果</h3>
-                            <p><strong>費用:</strong> ${cost}円（支払い済み）</p>
+                            <p><strong>投資額:</strong> ${investmentCost}円</p>
+                            <p><strong>UFO代金:</strong> ${fixedCost}円</p>
+                            <p><strong>総費用:</strong> ${totalCost}円（支払い済み）</p>
                             <p><strong>取得商品数:</strong> 0個</p>
                             <p><strong>残り所持金:</strong> ${newMoney}円</p>
                             <p style="color: red;"><strong>何らかの理由でタイムトラベルに失敗しました...</strong></p>
@@ -294,7 +311,9 @@
                         itemsHtml = '<p>アイテムが取得できませんでした</p>';
                     }
                     
-                    const cost = data.data ? data.data.cost : data.cost;
+                    const totalCost = data.data ? data.data.total_cost : data.total_cost;
+                    const investmentCost = data.data ? data.data.investment_cost : data.investment_cost;
+                    const fixedCost = data.data ? data.data.fixed_cost : data.fixed_cost;
                     const newMoney = data.data ? data.data.new_money : data.new_money;
                     const itemCount = data.data ? data.data.item_count : (data.items ? data.items.length : 0);
                     
@@ -304,7 +323,9 @@
                         </div>
                         <div class="result">
                             <h3>取得結果</h3>
-                            <p><strong>費用:</strong> ${cost}円</p>
+                            <p><strong>投資額:</strong> ${investmentCost}円</p>
+                            <p><strong>UFO代金:</strong> ${fixedCost}円</p>
+                            <p><strong>総費用:</strong> ${totalCost}円</p>
                             <p><strong>取得商品数:</strong> ${itemCount}個</p>
                             <p><strong>残り所持金:</strong> ${newMoney}円</p>
                             <div class="items-list">

@@ -7,7 +7,7 @@ import random
 import time
 from typing import Dict, List, Any, Tuple
 from .turn_system import turn_system
-from .travel_config import YEARS_MIN, YEARS_MAX, DISTANCE_MIN, DISTANCE_MAX, UFO_SIZE_MIN, UFO_SIZE_MAX
+from .travel_config import YEARS_MIN, YEARS_MAX, DISTANCE_MIN, DISTANCE_MAX
 
 
 class ItemSystem:
@@ -31,9 +31,9 @@ class ItemSystem:
         pass
     
     @staticmethod
-    def calculate_travel_cost(years: int, distance: int, ufo_size: float) -> float:
-        """タイムトラベルコストを計算"""
-        return (years * distance) * ufo_size
+    def calculate_travel_cost(years: int, distance: int) -> float:
+        """タイムトラベルコストを計算（フェーズ2: UFOサイズ廃止）"""
+        return years * distance
     
     @staticmethod
     def calculate_rarity_multiplier(years: int, distance: int) -> float:
@@ -191,16 +191,13 @@ class ItemSystem:
         }
     
     @classmethod
-    def validate_travel_parameters(cls, years: int, distance: int, ufo_size: float) -> Tuple[bool, str]:
-        """タイムトラベルパラメータの妥当性をチェック"""
+    def validate_travel_parameters(cls, years: int, distance: int) -> Tuple[bool, str]:
+        """タイムトラベルパラメータの妥当性をチェック（フェーズ2: UFOサイズ廃止）"""
         if years < YEARS_MIN or years > YEARS_MAX:
             return False, f"年数は{YEARS_MIN}〜{YEARS_MAX}年の範囲で指定してください"
         
         if distance < DISTANCE_MIN or distance > DISTANCE_MAX:
             return False, f"距離は{DISTANCE_MIN}〜{DISTANCE_MAX}kmの範囲で指定してください"
-        
-        if ufo_size < UFO_SIZE_MIN or ufo_size > UFO_SIZE_MAX:
-            return False, f"UFOサイズは{UFO_SIZE_MIN}〜{UFO_SIZE_MAX}倍の範囲で指定してください"
         
         return True, ""
     
@@ -238,11 +235,10 @@ class ItemSystem:
         return values
 
     @classmethod
-    def get_travel_result(cls, years: int, distance: int, ufo_size: float, 
-                         available_money: float) -> Dict[str, Any]:
-        """タイムトラベルの結果を取得（新仕様）"""
+    def get_travel_result(cls, years: int, distance: int, available_money: float) -> Dict[str, Any]:
+        """タイムトラベルの結果を取得（フェーズ2: UFOサイズ廃止）"""
         # パラメータ検証
-        valid, error_message = cls.validate_travel_parameters(years, distance, ufo_size)
+        valid, error_message = cls.validate_travel_parameters(years, distance)
         if not valid:
             return {
                 'success': False,
@@ -250,7 +246,7 @@ class ItemSystem:
             }
         
         # コスト計算
-        cost = cls.calculate_travel_cost(years, distance, ufo_size)
+        cost = cls.calculate_travel_cost(years, distance)
         
         # 資金チェック
         if cost > available_money:

@@ -19,21 +19,29 @@ def index():
 
 @app.route('/buy')
 def buy_mode():
-    """買うモードページ"""
-    from core.travel_config import YEARS_MIN, YEARS_MAX, DISTANCE_MIN, DISTANCE_MAX, UFO_SIZE_MIN, UFO_SIZE_MAX, DEFAULT_YEARS, DEFAULT_DISTANCE, DEFAULT_UFO_SIZE
+    """買うモードページ（フェーズ2: UFOサイズ廃止）"""
+    from core.travel_config import YEARS_MIN, YEARS_MAX, DISTANCE_MIN, DISTANCE_MAX, DEFAULT_YEARS, DEFAULT_DISTANCE
+    from core.turn_system import turn_system
+    from core.asset_manager import AssetManager
+    
     result = game_api.get_game_state()
+    game_state = result['data']
+    
+    # フェーズ2: 目標倍率と資産情報を追加
+    target_multiplier = turn_system.get_target_multiplier()
+    asset_info = AssetManager.get_asset_info(game_state['money'], game_state['inventory'])
+    
     return render_template('buy.html', 
-                         game_state=result['data'],
+                         game_state=game_state,
+                         target_multiplier=target_multiplier,
+                         asset_info=asset_info,
                          travel_limits={
                              'years_min': YEARS_MIN,
                              'years_max': YEARS_MAX,
                              'distance_min': DISTANCE_MIN,
                              'distance_max': DISTANCE_MAX,
-                             'ufo_size_min': UFO_SIZE_MIN,
-                             'ufo_size_max': UFO_SIZE_MAX,
                              'default_years': DEFAULT_YEARS,
-                             'default_distance': DEFAULT_DISTANCE,
-                             'default_ufo_size': DEFAULT_UFO_SIZE
+                             'default_distance': DEFAULT_DISTANCE
                          })
 
 @app.route('/sell')
@@ -50,14 +58,13 @@ def sell_mode():
 
 @app.route('/api/buy', methods=['POST'])
 def api_buy():
-    """商品購入API"""
+    """商品購入API（フェーズ2: UFOサイズ廃止・固定費統合）"""
     try:
         data = request.get_json()
         years = int(data['years'])
         distance = int(data['distance'])
-        ufo_size = float(data['ufo_size'])
         
-        result = travel_api.execute_travel(years, distance, ufo_size)
+        result = travel_api.execute_travel(years, distance)
         
         if result['success']:
             return jsonify(result)
