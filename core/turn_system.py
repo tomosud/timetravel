@@ -26,6 +26,7 @@ class TurnSystem:
         self.major_turn = 1
         self.minor_turn = 1
         self.price_curve = []
+        self.turn_multipliers = []  # 各ターンの倍率
         self.target_multiplier = AssetManager.generate_target_multiplier()  # フェーズ2: 目標倍率
         self.generate_new_price_curve()
         
@@ -50,7 +51,7 @@ class TurnSystem:
             }[trend_type]
             print(f"  トレンド: {trend_type} (バイアス: {trend_bias:+.2f})")
         
-        # ランダム乗数の生成
+        # 各ターンの倍率を直接生成
         raw_multipliers = []
         for i in range(self.MINOR_TURNS_PER_MAJOR):
             base_random = random.uniform(self.RANDOM_MIN, self.RANDOM_MAX)
@@ -64,24 +65,38 @@ class TurnSystem:
         
         print(f"  生ランダム乗数: {[f'{x:.2f}' for x in raw_multipliers]}")
         
-        # 累積乗算
-        cumulative_values = []
-        current_value = 1.0
-        for multiplier in raw_multipliers:
-            current_value *= multiplier
-            cumulative_values.append(current_value)
+        # 平均を計算
+        average_multiplier = sum(raw_multipliers) / len(raw_multipliers)
         
-        print(f"  累積値: {[f'{x:.2f}' for x in cumulative_values]}")
+        print(f"  生ランダム乗数の平均: {average_multiplier:.2f}")
         
-        # 正規化（最終値を目標倍率に調整）
-        final_value = cumulative_values[-1]
-        scale_factor = self.target_multiplier / final_value  # フェーズ2: 可変目標倍率使用
+        # 正規化（平均が目標倍率になるようスケーリング）
+        scale_factor = self.target_multiplier / average_multiplier
         
-        self.price_curve = [value * scale_factor for value in cumulative_values]
+        # 各ターンの正規化倍率（これが実際の価格曲線）
+        self.turn_multipliers = [m * scale_factor for m in raw_multipliers]
         
-        print(f"  最終値: {final_value:.2f} → スケール係数: {scale_factor:.3f}")
-        print(f"  正規化済み曲線: {[f'{x:.2f}' for x in self.price_curve]}")
-        print(f"  変化率: {[f'{(self.price_curve[i]/self.price_curve[i-1]-1)*100:+.1f}%' if i > 0 else '+0.0%' for i in range(len(self.price_curve))]}")
+        # 累積値計算（平均的な投資での成長シミュレーション用）
+        # 各ターンで同額投資した場合の平均価値成長
+        self.price_curve = []
+        cumulative_investment = 0
+        cumulative_value = 0
+        
+        for i, multiplier in enumerate(self.turn_multipliers):
+            # 各ターンで1単位投資すると仮定
+            cumulative_investment += 1
+            cumulative_value += 1 * multiplier  # 投資1 × そのターンの倍率
+            average_growth = cumulative_value / cumulative_investment
+            self.price_curve.append(average_growth)
+        
+        print(f"  スケール係数: {scale_factor:.3f}")
+        print(f"  各ターン倍率: {[f'{x:.2f}x' for x in self.turn_multipliers]}")
+        print(f"  累積値（参考）: {[f'{x:.2f}' for x in self.price_curve]}")
+        print(f"  平均成長率: {self.price_curve[-1]:.2f} (目標: {self.target_multiplier:.2f})")
+        
+        # 検証: 全ターンの平均が目標倍率になるかチェック
+        average_multiplier = sum(self.turn_multipliers) / len(self.turn_multipliers)
+        print(f"  各ターン倍率の平均: {average_multiplier:.2f}")
         
         return self.price_curve
     
@@ -90,13 +105,23 @@ class TurnSystem:
         return self.target_multiplier
     
     def get_current_price_multiplier(self) -> float:
-        """現在の子ターンの価格倍率を取得"""
+        """現在の子ターンの価格倍率を取得（各ターンの倍率）"""
+        if not self.turn_multipliers or self.minor_turn < 1 or self.minor_turn > len(self.turn_multipliers):
+            print(f"[TurnSystem] WARNING: 無効な子ターン {self.minor_turn}")
+            return 1.0
+        
+        multiplier = self.turn_multipliers[self.minor_turn - 1]
+        print(f"[TurnSystem] 現在のターン倍率: {multiplier:.2f}x (大ターン{self.major_turn}, 子ターン{self.minor_turn})")
+        return multiplier
+    
+    def get_current_cumulative_multiplier(self) -> float:
+        """現在の子ターンの累積価格倍率を取得（商品生成用）"""
         if not self.price_curve or self.minor_turn < 1 or self.minor_turn > len(self.price_curve):
             print(f"[TurnSystem] WARNING: 無効な子ターン {self.minor_turn}")
             return 1.0
         
         multiplier = self.price_curve[self.minor_turn - 1]
-        print(f"[TurnSystem] 現在の価格倍率: {multiplier:.2f} (大ターン{self.major_turn}, 子ターン{self.minor_turn})")
+        print(f"[TurnSystem] 現在の累積倍率: {multiplier:.2f} (商品生成用)")
         return multiplier
     
     def advance_minor_turn(self) -> bool:
@@ -129,6 +154,7 @@ class TurnSystem:
             'current_multiplier': self.get_current_price_multiplier(),
             'target_multiplier': self.target_multiplier,  # フェーズ2: 目標倍率追加
             'price_curve': self.price_curve.copy(),
+            'turn_multipliers': self.turn_multipliers.copy(),  # 各ターンの倍率追加
             'progress_ratio': self.minor_turn / self.MINOR_TURNS_PER_MAJOR,
             'is_major_turn_complete': self.minor_turn >= self.MINOR_TURNS_PER_MAJOR
         }
@@ -139,6 +165,7 @@ class TurnSystem:
         self.major_turn = 1
         self.minor_turn = 1
         self.price_curve = []
+        self.turn_multipliers = []
         # フェーズ2: 新しい目標倍率を生成
         self.target_multiplier = AssetManager.generate_target_multiplier()
         self.generate_new_price_curve()

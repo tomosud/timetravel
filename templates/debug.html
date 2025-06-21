@@ -158,12 +158,22 @@
         </div>
         
         <div class="price-curve">
-            <strong>現在の価格曲線:</strong><br>
+            <strong>現在の価格曲線（累積値）:</strong><br>
             {% for multiplier in game_state.turn_info.price_curve %}
                 {% if loop.index == game_state.turn_info.minor_turn %}
                     <span style="background-color: #9b59b6; color: white; padding: 2px 4px; border-radius: 3px;">{{ "%.2f"|format(multiplier) }}</span>
                 {% else %}
                     {{ "%.2f"|format(multiplier) }}
+                {% endif %}
+                {% if not loop.last %} → {% endif %}
+            {% endfor %}
+            
+            <br><br><strong>各ターンの倍率:</strong><br>
+            {% for multiplier in game_state.turn_info.turn_multipliers %}
+                {% if loop.index == game_state.turn_info.minor_turn %}
+                    <span style="background-color: #e74c3c; color: white; padding: 2px 4px; border-radius: 3px;">{{ "%.2f"|format(multiplier) }}x</span>
+                {% else %}
+                    {{ "%.2f"|format(multiplier) }}x
                 {% endif %}
                 {% if not loop.last %} → {% endif %}
             {% endfor %}

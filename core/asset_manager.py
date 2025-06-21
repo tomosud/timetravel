@@ -111,8 +111,8 @@ class AssetManager:
         multiplier = round(multiplier, 2)
         
         print(f"[AssetManager] 目標倍率生成:")
-        print(f"  範囲: {TARGET_MULTIPLIER_MIN}倍 ～ {TARGET_MULTIPLIER_MAX}倍")
-        print(f"  生成値: {multiplier}倍")
+        print(f"  範囲: {TARGET_MULTIPLIER_MIN:.1f}倍 ～ {TARGET_MULTIPLIER_MAX:.1f}倍")
+        print(f"  生成値: {multiplier:.2f}倍")
         
         return multiplier
     
@@ -121,22 +121,22 @@ class AssetManager:
         """
         目標倍率の説明テキスト生成
         """
-        if multiplier >= 5.0:
-            return f"🚀 高成長期待 ({multiplier}倍) - 積極投資推奨"
+        if multiplier >= 7.0:
+            return f"🚀 超高成長期待 ({multiplier:.1f}倍) - 積極投資推奨"
+        elif multiplier >= 5.0:
+            return f"📈 高成長期待 ({multiplier:.1f}倍) - 積極投資"
+        elif multiplier >= 3.0:
+            return f"📊 成長期待 ({multiplier:.1f}倍) - 適度な投資"
         elif multiplier >= 2.0:
-            return f"📈 成長期待 ({multiplier}倍) - 適度な投資"
-        elif multiplier >= 1.0:
-            return f"⚖️ 安定期間 ({multiplier}倍) - 慎重な投資"
-        elif multiplier >= 0.5:
-            return f"📉 低迷期間 ({multiplier}倍) - 投資控えめ"
+            return f"⚖️ 堅実成長 ({multiplier:.1f}倍) - 安定投資"
         else:
-            return f"🔥 危険期間 ({multiplier}倍) - 投資回避推奨"
+            return f"🔒 保守期間 ({multiplier:.1f}倍) - 慎重な投資"
     
     @classmethod
     def calculate_inventory_sell_value(cls, inventory: List[Dict[str, Any]]) -> float:
         """
         在庫の売却可能価値を計算
-        売却価値 = base_value × 80%
+        売却価値 = base_value × 100%
         """
         total_sell_value = 0.0
         

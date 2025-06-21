@@ -211,6 +211,7 @@
         <div><strong>子ターン:</strong> {{ game_state.turn_info.minor_turn }}/{{ game_state.turn_info.minor_turns_total }}</div>
     </div>
 
+
     <div class="auction-section">
         <h3>オークション出品設定（最大8個まで）</h3>
         <table class="auction-table">
@@ -652,6 +653,7 @@
             console.log(`[Debug] オプション価格取得: data-attr=${priceAttr}, テキスト抽出=${extractEstimatedPrice(option.textContent)}, 最終価格=${price}`);
             return price;
         }
+
 
         // 初期化
         loadExistingAuctions();

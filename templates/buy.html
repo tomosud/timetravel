@@ -144,6 +144,39 @@
             margin-bottom: 10px;
             border-left: 4px solid #3498db;
         }
+        .auto-invest-section {
+            background-color: #16a085;
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        .auto-invest-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+        .auto-invest-btn {
+            background-color: #1abc9c;
+            color: white;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 3px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            min-width: 50px;
+            transition: background-color 0.3s;
+        }
+        .auto-invest-btn:hover {
+            background-color: #148f77;
+        }
+        .auto-invest-btn:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
@@ -175,6 +208,25 @@
                 <span style="color: green;">継続可能</span>
             {% endif %}
         </div>
+    </div>
+
+    <!-- 自動投資セクション -->
+    <div class="auto-invest-section">
+        <h3>🤖 自動投資（テスト用）</h3>
+        <p>投資可能額の指定割合で自動投資します（UFO代金を引いた現金ベース）</p>
+        <div class="auto-invest-buttons">
+            <button class="auto-invest-btn" onclick="autoInvest(0.1)">10%</button>
+            <button class="auto-invest-btn" onclick="autoInvest(0.2)">20%</button>
+            <button class="auto-invest-btn" onclick="autoInvest(0.3)">30%</button>
+            <button class="auto-invest-btn" onclick="autoInvest(0.4)">40%</button>
+            <button class="auto-invest-btn" onclick="autoInvest(0.5)">50%</button>
+            <button class="auto-invest-btn" onclick="autoInvest(0.6)">60%</button>
+            <button class="auto-invest-btn" onclick="autoInvest(0.7)">70%</button>
+            <button class="auto-invest-btn" onclick="autoInvest(0.8)">80%</button>
+            <button class="auto-invest-btn" onclick="autoInvest(0.9)">90%</button>
+            <button class="auto-invest-btn" onclick="autoInvest(1.0)">100%</button>
+        </div>
+        <div id="auto-invest-result"></div>
     </div>
 
     <div class="buy-form">
@@ -354,6 +406,101 @@
                 buyBtn.textContent = '🛸 タイムトラベル実行！';
             });
         });
+
+        // 自動投資関数
+        function autoInvest(ratio) {
+            const autoInvestButtons = document.querySelectorAll('.auto-invest-btn');
+            const resultDiv = document.getElementById('auto-invest-result');
+            
+            // 全ボタンを無効化
+            autoInvestButtons.forEach(btn => {
+                btn.disabled = true;
+                if (btn.textContent.includes(Math.round(ratio * 100) + '%')) {
+                    btn.textContent = '投資中...';
+                }
+            });
+            
+            resultDiv.innerHTML = '';
+            
+            fetch('/api/auto_invest', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ ratio: ratio })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    resultDiv.innerHTML = `
+                        <div style="background-color: #e74c3c; color: white; padding: 10px; border-radius: 5px; margin-top: 10px;">
+                            エラー: ${data.error}
+                        </div>
+                    `;
+                } else if (data.failed || (data.data && data.data.failed)) {
+                    const investInfo = data.auto_invest_info || {};
+                    resultDiv.innerHTML = `
+                        <div style="background-color: #e67e22; color: white; padding: 10px; border-radius: 5px; margin-top: 10px;">
+                            💥 タイムトラベル失敗！<br>
+                            ${investInfo.ratio_percent || 0}%投資: 投資可能額${investInfo.available_for_investment || 0}円 → 目標${investInfo.target_investment || 0}円<br>
+                            計算: ${investInfo.calculated_years || 0}年 × ${investInfo.calculated_distance || 0}km = ${investInfo.actual_investment || 0}円<br>
+                            固定費: ${investInfo.fixed_cost || 0}円 | 総費用: ${investInfo.total_cost || 0}円
+                        </div>
+                    `;
+                } else {
+                    const investInfo = data.auto_invest_info || {};
+                    const resultData = data.data || data;
+                    const totalValue = resultData.items ? resultData.items.reduce((sum, item) => sum + item.base_value, 0) : 0;
+                    
+                    resultDiv.innerHTML = `
+                        <div style="background-color: #27ae60; color: white; padding: 10px; border-radius: 5px; margin-top: 10px;">
+                            ✅ ${investInfo.ratio_percent || 0}%自動投資成功！<br>
+                            投資可能額: ${investInfo.available_for_investment || 0}円 → 目標: ${investInfo.target_investment || 0}円<br>
+                            計算: ${investInfo.calculated_years || 0}年 × ${investInfo.calculated_distance || 0}km = ${investInfo.actual_investment || 0}円<br>
+                            固定費: ${investInfo.fixed_cost || 0}円 | 総費用: ${investInfo.total_cost || 0}円<br>
+                            取得: ${resultData.item_count || 0}個 | 価値: ${totalValue.toFixed(2)}円<br>
+                            投資倍率: ${investInfo.actual_investment > 0 ? (totalValue / investInfo.actual_investment).toFixed(2) : 0}x
+                        </div>
+                    `;
+                    
+                    // ページ情報を更新
+                    if (resultData.new_money !== undefined) {
+                        document.getElementById('current-money').textContent = resultData.new_money;
+                        updateCost(); // コスト表示も更新
+                    }
+                }
+                
+                // ボタンを元に戻す
+                autoInvestButtons.forEach(btn => {
+                    btn.disabled = false;
+                    const percent = btn.textContent.match(/(\d+)%/);
+                    if (percent) {
+                        btn.textContent = percent[0];
+                    } else if (btn.textContent.includes('投資中')) {
+                        btn.textContent = Math.round(ratio * 100) + '%';
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                resultDiv.innerHTML = `
+                    <div style="background-color: #e74c3c; color: white; padding: 10px; border-radius: 5px; margin-top: 10px;">
+                        通信エラーが発生しました: ${error.message}
+                    </div>
+                `;
+                
+                // ボタンを元に戻す
+                autoInvestButtons.forEach(btn => {
+                    btn.disabled = false;
+                    const percent = btn.textContent.match(/(\d+)%/);
+                    if (percent) {
+                        btn.textContent = percent[0];
+                    } else if (btn.textContent.includes('投資中')) {
+                        btn.textContent = Math.round(ratio * 100) + '%';
+                    }
+                });
+            });
+        }
 
         // 初期コスト計算
         updateCost();
